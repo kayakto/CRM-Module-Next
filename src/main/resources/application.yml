@@ -1,0 +1,25 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/internships
+    username: crm_admin
+    password: "bitrix24"
+
+security:
+  jwt:
+    secret:
+      kkpCT7HHsKjkXCfVKzz7JA9Dgwhkg0xXqequdWhH60onkqPnU83hZ831b3eOYvyQ
+      dMytDFNfjMwZUBC3DHYaRg==
+    expiration:
+      86400000
+    refresh-expiration:
+      604800000
+
+springdoc:
+  swagger-ui:
+    url: /swagger.json
+

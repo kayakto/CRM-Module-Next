@@ -1,0 +1,1504 @@
+openapi: 3.0.1
+info:
+  title: CRM module for Uralintern
+  description: |
+    API documentation for Uralintern CRM Module.
+
+    **Контроллеры:**
+    - **auth-controller**: Отвечает за регистрацию и авторизацию пользователей, включая регистрацию с реферальной ссылкой и обновление токенов.
+    - **user-info-controller**: Управляет пользовательскими данными, включая обновление профиля, получение реферальных ссылок и список руководителей.
+    - **event-controller**: Обеспечивает управление мероприятиями, включая их создание, обновление, скрытие, удаление, а также доступ к информации о мероприятиях.
+    - **message-controller**: Управляет шаблонами сообщений для мероприятий, включая их получение и обновление.
+    - **event-student-controller**: Обеспечивает управление заявками и участием студентов в мероприятиях, включая отправку заявок, их принятие/отклонение и управление студентами на мероприятии.
+    - **event-curator-controller**: Управляет заявками и участием кураторов в мероприятиях, включая их принятие/отклонение и управление кураторами.
+    - **notification-controller**: Управляет уведомлениями пользователей, связанными с их участием в мероприятиях.
+  version: '1.0'
+servers:
+  - url: https://localhost/api
+    description: kayakto server url
+security:
+  - BearerAuth: []
+tags:
+  - name: auth-controller
+  - name: user-info-controller
+  - name: event-controller
+  - name: event-student-controller
+    description: Тут вообще ничего не работает, это заготовка для нового backend
+  - name: status-controller
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth-controller
+      operationId: login
+      description: |
+        Авторизация пользователя. Возвращает токены доступа и обновления.
+        Доступен для всех пользователей.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успешный вход в систему.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokensDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /auth/register:
+    post:
+      summary: Регистрация пока не работает
+      tags:
+        - auth-controller
+      operationId: register
+      description: |
+        Регистрация нового пользователя. Доступно для всех.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: Пользователь успешно зарегистрирован.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /auth/register-with-token:
+    post:
+      summary: Регистрация пока не работает
+      tags:
+        - auth-controller
+      operationId: registerWithToken
+      description: Регистрация администратора по токену, полученному от администратора. ВНИМАНИЕ нельзя указывать компетенции и роль, в примере показано.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequestManager'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /auth/refresh:
+    post:
+      tags:
+        - auth-controller
+      operationId: refresh
+      description: |
+        Обновление токена доступа по рефреш-токену.
+        Доступен для всех пользователей с валидным рефреш-токеном.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Токены успешно обновлены.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokensDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /users/invite-admin:
+    post:
+      tags:
+        - user-info-controller
+      operationId: inviteManager
+      description: |
+        Создание реферальной ссылки для приглашения администратора. Доступно только администраторам.
+      responses:
+        '200':
+          description: Реферальная ссылка успешно создана.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralTokenDTO'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /users/update-password:
+    post:
+      tags:
+        - user-info-controller
+      operationId: updatePassword
+      description: Обновление пароля пользователя, который сделал запрос. Доступно всем пользователям.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokensDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /users/update-email:
+    post:
+      tags:
+        - user-info-controller
+      operationId: updateEmail
+      description: Обновление почты пользователя, который сделал запрос. Доступно всем пользователям.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokensDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /users/me:
+    get:
+      tags:
+        - user-info-controller
+      operationId: getCurrentUser
+      description: |
+        Получение данных текущего пользователя.
+        Требуется авторизация.
+      responses:
+        '200':
+          description: Данные пользователя успешно получены.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags:
+        - user-info-controller
+      operationId: updateCurrentUser
+      description: |
+        Обновление данных текущего пользователя.
+        Требуется авторизация.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Данные пользователя успешно обновлены.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /users/my-role:
+    get:
+      tags:
+        - user-info-controller
+      operationId: getMyRole
+      description: Получение роли текущего пользователя. Доступно всем пользователям. Вернет роль в виде "STUDENT"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /users/{userId}:
+    get:
+      tags:
+        - user-info-controller
+      operationId: getUserById
+      description: Получение профиля пользователя по идентификатору. Доступ - все авторизованные пользователи. В будущем может будет ограничение доступа.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/post:
+    post:
+      tags:
+        - event-controller
+      summary: пока не работает
+      operationId: createEvent
+      description: |
+        Создание нового мероприятия. Доступно только администраторам.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '200':
+          description: Мероприятие успешно создано.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/start-event:
+    post:
+      tags:
+        - event-controller
+      summary: пока не работает
+      operationId: startEvent
+      description: Досрочно начать мероприятие. Доступ - администратор и руководитель проекта.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartEventRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/{eventId}:
+    get:
+      tags:
+        - event-controller
+      operationId: getEventByID
+      description: Получение данных мероприятия по его идентификатору. Доступ - администратор или руководитель.
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/my:
+    get:
+      tags:
+        - event-controller
+      operationId: getMyEvents
+      description: 'Получение данных мероприятий, с которыми связан пользователь, отправивший запрос. Доступ: все авторизованные пользователи.'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/active:
+    get:
+      tags:
+        - event-controller
+      operationId: getOpenedEvents
+      description: Получение мероприятий, доступных для регистрации. Доступно всем авторизованным пользователям.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/update/{eventId}:
+    put:
+      tags:
+        - event-controller
+      summary: пока не работает
+      operationId: updateEvent
+      description: |
+        Обновление информации о мероприятии. Доступно администраторам связанным с мероприятием.
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: ID мероприятия для обновления.
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '200':
+          description: Мероприятие успешно обновлено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/hide/{eventId}:
+    put:
+      summary: пока не работает
+      tags:
+        - event-controller
+      operationId: hideEvent
+      description: Поменять статус мероприятия на "скрытое". Или вернуть состояние мероприятия к обычному. Доступ - руководитель и администратор.
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events/delete/{eventId}:
+    delete:
+      tags:
+        - event-controller
+      operationId: deleteEvent
+      description: |
+        Удаление мероприятия. Доступно только администраторам.
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: ID мероприятия для удаления.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Мероприятие успешно удалено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /events-students/test-result:
+    post:
+      tags:
+        - event-student-controller
+      operationId: saveTestResult
+      description: |
+        Выгрузка баллов за тест студента. Доступно только администраторам.
+        ВНИМАНИЕ: этот метод для интеграции с сервисом тестов для uralintern
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentTestResultRequest'
+      responses:
+        '200':
+          description: Баллы успешно выгрузились.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /events-students/{eventId}/student-can-send/{studentId}:
+    get:
+      tags:
+        - event-student-controller
+      operationId: canSendStudent
+      description: Если студент отправлял заявку на мероприятие - ему не будет доступна регистрация на мероприятие (вернется false). В обратном случае студент сможет отправить заявку на мероприятие (true).
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/waiting-students:
+    get:
+      tags:
+        - event-student-controller
+      operationId: getWaitingStudentsInfo
+      description: 'Получение студентов, которые ждут принятия заявки на мероприятие. Доступ: руководитель'
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventStudentInfoDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/students:
+    get:
+      tags:
+        - event-student-controller
+      operationId: getStudentsInfo
+      description: 'Получение студентов, которые связаных с данным мероприятием, учитывая все возможные статусы. Доступ: руководитель'
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventStudentInfoDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/accepted-students:
+    get:
+      tags:
+        - event-student-controller
+      operationId: getAcceptedStudentsInfo
+      description: 'Получение студентов, которых приняли на мероприятие и их добавили в чат. Доступ: руководитель, администратор.'
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventStudentInfoDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/started-students:
+    get:
+      tags:
+        - event-student-controller
+      operationId: getStartedStudentsInfo
+      description: 'Получение студентов, которые начали выполнение мероприятия. Доступ: руководитель, администратор.'
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventStudentInfoDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/started-students-group:
+    get:
+      tags:
+        - event-student-controller
+      operationId: getStartedStudentsInfoGroup
+      description: 'Получение группы студентов, которые начали выполнение мероприятия и они в одной группе с текущим куратором. Доступ: куратор.'
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventStudentInfoDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/send/{studentId}:
+    put:
+      tags:
+        - event-student-controller
+      description: Отправить студенту заявку на регистрацию на мероприятие. Доступ - студент.
+      operationId: sendStudentToEvent
+      parameters:
+        - name: eventId
+          in: path
+          description: идентификатор мероприятия
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+        - name: studentId
+          in: path
+          description: идентификатор студента
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/reject/{studentId}:
+    put:
+      tags:
+        - event-student-controller
+      description: Отклонить заявку студента на мероприятие. Доступ- руководитель.
+      operationId: rejectStudentRequest
+      parameters:
+        - name: eventId
+          in: path
+          description: идентификатор мероприятия
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+        - name: studentId
+          in: path
+          description: идентификатор студента
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /events-students/{eventId}/accept/{studentId}:
+    put:
+      tags:
+        - event-student-controller
+      description: Принять заявку студента на мероприятие. Доступ - руководитель.
+      operationId: acceptStudentRequest
+      parameters:
+        - name: eventId
+          in: path
+          description: идентификатор мероприятия
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+        - name: studentId
+          in: path
+          description: идентификатор студента
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /events-students/{eventId}/delete/{studentId}:
+    delete:
+      tags:
+        - event-student-controller
+      operationId: deleteStudentFromEvent
+      description: Удаление студента с мероприятия. Доступ - руководитель.
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+
+  /api/statuses/{id}:
+    put:
+      tags:
+        - status-controller
+      summary: Обновить статус
+      description: |
+        Обновляет название существующего статуса по ID.
+        Доступен только для администраторов.
+      operationId: updateStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID статуса для обновления
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationStatus'
+      responses:
+        '200':
+          description: Статус успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationStatus'
+        '404':
+          description: Статус не найден
+        '400':
+          description: Неверный запрос
+        '500':
+          description: Внутренняя ошибка сервера
+
+    delete:
+      tags:
+        - status-controller
+      summary: Удалить статус
+      description: |
+        Удаляет статус по ID.
+        Доступен только для администраторов.
+      operationId: deleteStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID статуса для удаления
+      responses:
+        '200':
+          description: Статус успешно удален
+        '404':
+          description: Статус не найден
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /api/statuses:
+    post:
+      tags:
+        - status-controller
+      summary: Создать новый статус
+      description: |
+        Создает новый статус в системе.
+        Доступен только для администраторов.
+      operationId: createStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationStatus'
+      responses:
+        '200':
+          description: Статус успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationStatus'
+        '400':
+          description: Неверный запрос (например, пустое название статуса)
+        '500':
+          description: Внутренняя ошибка сервера
+
+    get:
+      tags:
+        - status-controller
+      summary: Получить все статусы
+      description: |
+        Возвращает список всех доступных статусов.
+        Доступен для всех аутентифицированных пользователей.
+      operationId: getAllStatuses
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApplicationStatus'
+        '500':
+          description: Внутренняя ошибка сервера
+
+components:
+  responses:
+    OkResponse:
+      description: OK, запрос выполнен успешно
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponseDTO'
+    BadRequestResponse:
+      description: Bad Request, запрос неверный со стороны клиента
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Invalid argument
+    ForbiddenResponse:
+      description: Forbidden, отказано в доступе
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Access denied
+    NotFoundResponse:
+      description: Not Found, такого элемента не существует
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Event with id 123 not found
+    InternalServerErrorResponse:
+      description: Internal Server Error, запрос вызвал ошибку на сервере
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Internal Server Error
+  schemas:
+    ApplicationStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: Уникальный идентификатор статуса
+        name:
+          type: string
+          description: Название статуса
+          example: "В обработке"
+      required:
+        - name
+    UserUpdateRequest:
+      required:
+        - firstName
+        - lastName
+        - telegramUrl
+        - vkUrl
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Николай
+        lastName:
+          type: string
+          example: Путин
+        surname:
+          type: string
+          example: Евгеньевич
+        telegramUrl:
+          type: string
+          example: https://t.me/kayakto
+        vkUrl:
+          type: string
+          example: https://vk.com/kayakto
+        competencies:
+          type: string
+          example: Spring Boot, Gradle, git, Java, Docker
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 123
+        firstName:
+          type: string
+          example: Николай
+        lastName:
+          type: string
+          example: Иванов
+        surname:
+          type: string
+          example: Евгеньевич
+        telegramUrl:
+          type: string
+          example: https://t.me/kayakto
+        vkUrl:
+          type: string
+          example: https://vk.com/kayakto
+        role_enum:
+          type: string
+          enum:
+            - ADMIN
+            - CURATOR
+            - MANAGER
+            - STUDENT
+          example: STUDENT
+        competencies:
+          type: string
+          example: Spring Boot, Gradle, git, Java, Docker
+    MessageUpdateRequest:
+      type: object
+      properties:
+        messageId:
+          type: integer
+          format: int64
+          example: 40
+        text:
+          type: string
+          example: 'Вы приняты на мероприятие "Продажа часов". Присоединяйтесь к чату: t.me/chatBitrix'
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 40
+        eventId:
+          type: integer
+          format: int64
+          example: 34
+        text:
+          type: string
+          example: 'Вы приняты на мероприятие "Продажа часов". Присоединяйтесь к чату: t.me/chatBitrix'
+        messageStatus:
+          type: string
+          enum:
+            - ACCEPTED
+            - DECLINED
+          example: ACCEPTED
+        editDate:
+          type: string
+          format: date-time
+          example: '2024-11-01T22:00:00+05:00'
+    EventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: CRM модуль
+        descriptionText:
+          type: string
+          example: CRM модуль для мастеров глиняной лепки
+        adminId:
+          type: integer
+          format: int64
+          example: 1
+        managerId:
+          type: integer
+          format: int64
+          example: 2
+        eventStartDate:
+          type: string
+          format: date-time
+          example: '2025-02-22T22:00:00+05:00'
+        eventEndDate:
+          type: string
+          format: date-time
+          example: '2025-05-18T22:00:00+05:00'
+        enrollmentStartDate:
+          type: string
+          format: date-time
+          example: '2025-01-01T22:00:00+05:00'
+        enrollmentEndDate:
+          type: string
+          format: date-time
+          example: '2025-02-22T22:00:00+05:00'
+        chatUrl:
+          type: string
+          example: https://t.me/chaturl
+        numberSeatsStudent:
+          type: integer
+          format: int32
+          example: 50
+        hasTest:
+          type: boolean
+          example: false
+        testUrl:
+          type: string
+          example: null
+
+    StudentTestResultRequest:
+      type: object
+      properties:
+        studentId:
+          type: integer
+          format: int64
+          example: 1
+        eventId:
+          type: integer
+          format: int64
+          example: 1
+        passed:
+          type: boolean
+          example: true
+        score:
+          type: integer
+          format: int64
+          example: 100
+
+    EventDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        condition:
+          type: string
+          enum:
+            - PREPARATION
+            - REGISTRATION_OPEN
+            - NO_SEATS
+            - REGISTRATION_CLOSED
+            - IN_PROGRESS
+            - FINISHED
+            - HIDDEN
+            - DELETED
+          example: REGISTRATION_OPEN
+        descriptionText:
+          type: string
+          example: CRM модуль для мастеров глиняной лепки
+        title:
+          type: string
+          example: CRM модуль
+        adminId:
+          type: integer
+          format: int64
+          example: 1
+        managerId:
+          type: integer
+          format: int64
+          example: 1
+        eventStartDate:
+          type: string
+          format: date-time
+          example: '2025-02-22T22:00:00+05:00'
+        eventEndDate:
+          type: string
+          format: date-time
+          example: '2025-05-18T22:00:00+05:00'
+        enrollmentStartDate:
+          type: string
+          format: date-time
+          example: '2025-01-01T22:00:00+05:00'
+        enrollmentEndDate:
+          type: string
+          format: date-time
+          example: '2025-02-22T22:00:00+05:00'
+        numberSeatsStudent:
+          type: integer
+          format: int32
+          example: 50
+        chatUrl:
+          type: string
+          example: https://t.me/chaturl
+        hasTest:
+          type: boolean
+          example: false
+    UserRequest:
+      required:
+        - email
+        - firstName
+        - lastName
+        - sign
+        - telegramUrl
+        - vkUrl
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Николай
+        lastName:
+          type: string
+          example: Иванов
+        surname:
+          type: string
+          example: Евгеньевич
+        email:
+          type: string
+          example: mail@mail.ru
+        sign:
+          type: string
+          example: password
+        telegramUrl:
+          type: string
+          example: https://t.me/kayakto
+        vkUrl:
+          type: string
+          example: https://vk.com/kayakto
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - CURATOR
+            - MANAGER
+            - STUDENT
+          example: STUDENT
+        competencies:
+          type: string
+          example: Spring Boot, Gradle, git, Java, Docker
+    UserRequestManager:
+      required:
+        - email
+        - firstName
+        - lastName
+        - sign
+        - telegramUrl
+        - vkUrl
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Николай
+        lastName:
+          type: string
+          example: Иванов
+        surname:
+          type: string
+          example: Евгеньевич
+        email:
+          type: string
+          example: mail@mail.ru
+        sign:
+          type: string
+          example: password
+        telegramUrl:
+          type: string
+          example: https://t.me/kayakto
+        vkUrl:
+          type: string
+          example: https://vk.com/kayakto
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: mail123@mail.ru
+        password:
+          type: string
+          example: password
+    NotificationInfo:
+      type: object
+      properties:
+        notificationId:
+          type: integer
+          format: int64
+          example: 156
+        eventTitle:
+          type: string
+          example: Продажа часов
+        messageText:
+          type: string
+          example: Вы приняты на мероприятие "Продажа часов"
+        sent_at:
+          type: string
+          format: date-time
+          example: '2024-11-01T22:00:00+05:00'
+    EventStudentInfoDTO:
+      type: object
+      properties:
+        eventId:
+          type: integer
+          format: int64
+          example: 1
+        studentId:
+          type: integer
+          format: int64
+          example: 3
+        statusRequest:
+          type: string
+          enum:
+            - SENT_PERSONAL_INFO
+            - REJECTED_FROM_EVENT
+            - ADDED_IN_CHAT
+            - STARTED_EVENT
+            - ENDED_EVENT
+            - DELETED_FROM_EVENT
+          example: SENT_PERSONAL_INFO
+        firstName:
+          type: string
+          example: Николай
+        lastName:
+          type: string
+          example: Алексеев
+        surname:
+          type: string
+          example: Михайлович
+        competencies:
+          type: string
+          example: Spring Boot, Gradle, git, Java, Docker
+        telegramUrl:
+          type: string
+          example: https://t.me/kayakto
+        vkUrl:
+          type: string
+          example: https://vk.com/kayakto
+        curatorFirstName:
+          type: string
+          example: Николай
+        curatorLastName:
+          type: string
+          example: Путин
+        curatorSurname:
+          type: string
+          example: Евгеньевич
+    EventCuratorInfoDTO:
+      type: object
+      properties:
+        eventId:
+          type: integer
+          format: int64
+          example: 1
+        curatorId:
+          type: integer
+          format: int64
+          example: 1
+        curatorStatus:
+          type: string
+          enum:
+            - SENT_PERSONAL_INFO
+            - REJECTED_FROM_EVENT
+            - ADDED_IN_CHAT
+            - STARTED_EVENT
+            - ENDED_EVENT
+            - DELETED_FROM_EVENT
+          example: REJECTED_FROM_EVENT
+        firstName:
+          type: string
+          example: Владислав
+        lastName:
+          type: string
+          example: Путин
+        surname:
+          type: string
+          example: Николаевич
+        competencies:
+          type: string
+          example: Spring Boot, Gradle, git, Java, Docker
+        telegramUrl:
+          type: string
+          example: https://t.me/kayakto
+        vkUrl:
+          type: string
+          example: https://vk.com/kayakto
+    TokensDTO:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+    ReferralTokenDTO:
+      type: object
+      properties:
+        referralToken:
+          type: string
+    StartEventRequest:
+      type: object
+      properties:
+        eventId:
+          type: integer
+          format: int64
+          example: 123
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+    MessageResponseDTO:
+      type: object
+      properties:
+        message:
+          type: string
+    EmailUpdateRequest:
+      type: object
+      properties:
+        oldEmail:
+          type: string
+        newEmail:
+          type: string
+    PasswordUpdateRequest:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: User with email email123@gmail.com not found
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
