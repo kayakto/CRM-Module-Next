@@ -1,5 +1,6 @@
 package org.bitebuilders.controller;
 
+import org.bitebuilders.controller.requests.ApplicationStatusRequest;
 import org.bitebuilders.model.ApplicationStatus;
 import org.bitebuilders.service.ApplicationStatusService;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +19,9 @@ public class ApplicationStatusController {
 
     // Создание статуса
     @PostMapping
-    public ResponseEntity<ApplicationStatus> createStatus(@RequestBody ApplicationStatus status) {
-        ApplicationStatus createdStatus = statusService.createStatus(status);
+    public ResponseEntity<ApplicationStatus> createStatus(@RequestBody ApplicationStatusRequest statusRequest) {
+        ApplicationStatus createdStatus = statusService
+                .createStatus(statusRequest.toApplicationStatus());
         return ResponseEntity.ok(createdStatus);
     }
 

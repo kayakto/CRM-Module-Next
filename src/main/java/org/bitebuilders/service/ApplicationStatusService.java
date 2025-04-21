@@ -5,6 +5,7 @@ import org.bitebuilders.repository.ApplicationStatusRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,7 @@ public class ApplicationStatusService {
         return statusRepository.findById(id)
                 .map(existingStatus -> {
                     existingStatus.setName(newStatus.getName());
+                    existingStatus.setUpdatedAt(OffsetDateTime.now());
                     return statusRepository.save(existingStatus);
                 });
     }
@@ -48,7 +50,7 @@ public class ApplicationStatusService {
         return (List<ApplicationStatus>) statusRepository.findAll();
     }
 
-    // Получение статуса по ID (опционально, если нужно)
+    // Получение статуса по ID
     public Optional<ApplicationStatus> getStatusById(Long id) {
         return statusRepository.findById(id);
     }

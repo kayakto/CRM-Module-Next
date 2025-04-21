@@ -1352,7 +1352,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ApplicationStatus"
+                "$ref": "#/components/schemas/ApplicationStatusRequest"
               }
             }
           }
@@ -1423,7 +1423,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ApplicationStatus"
+                "$ref": "#/components/schemas/ApplicationStatusRequest"
               }
             }
           }
@@ -1565,10 +1565,44 @@
             "type": "string",
             "description": "Название статуса",
             "example": "В обработке"
+          },
+          "isSystem": {
+            "type": "boolean",
+            "example": false
+          },
+          "displayOrder": {
+            "type": "integer",
+            "example": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-11-01T22:00:00+05:00"
           }
         },
         "required": [
-          "name"
+          "name",
+          "isSystem",
+          "displayOrder",
+          "updatedAt"
+        ]
+      },
+      "ApplicationStatusRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название статуса",
+            "example": "В обработке"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "required": [
+          "name",
+          "displayOrder"
         ]
       },
       "UserUpdateRequest": {
