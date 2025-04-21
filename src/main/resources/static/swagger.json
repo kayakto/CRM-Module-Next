@@ -1473,6 +1473,160 @@
           }
         }
       }
+    },
+    "/api/forms": {
+      "post": {
+        "tags": [
+          "event-forms"
+        ],
+        "summary": "Создать новую анкету",
+        "description": "Создает анкету с указанными полями",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFormRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Анкета успешно создана",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestResponse"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "event-forms"
+        ],
+        "summary": "Получить все анкеты",
+        "description": "Возвращает список всех анкет",
+        "responses": {
+          "200": {
+            "description": "Успешный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormShortResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/forms/{id}": {
+      "get": {
+        "tags": [
+          "event-forms"
+        ],
+        "summary": "Получить анкету с полями",
+        "description": "Возвращает полную информацию об анкете включая все поля",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundResponse"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "event-forms"
+        ],
+        "summary": "Обновить анкету",
+        "description": "Обновляет название и поля анкеты",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFormRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Анкета успешно обновлена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "event-forms"
+        ],
+        "summary": "Удалить анкету",
+        "description": "Удаляет анкету и все связанные поля",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Анкета успешно удалена"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundResponse"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1553,6 +1707,168 @@
       }
     },
     "schemas": {
+      "FormShortResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Анкета для стажировки"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-04-15T10:30:00Z"
+          }
+        }
+      },
+      "FormResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FormShortResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldResponse"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "FieldResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Учебное заведение"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "SELECT",
+              "CHECKBOX",
+              "RADIO"
+            ],
+            "example": "TEXT"
+          },
+          "required": {
+            "type": "boolean",
+            "example": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "example": 1
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Бакалавр",
+              "Магистр"
+            ]
+          }
+        }
+      },
+      "CreateFormRequest": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "title",
+          "fields"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Анкета для стажировки"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldRequest"
+            }
+          }
+        }
+      },
+      "UpdateFormRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "fields"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Обновленная анкета"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldRequest"
+            }
+          }
+        }
+      },
+      "FieldRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "required"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Факультет"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "SELECT",
+              "CHECKBOX",
+              "RADIO"
+            ],
+            "example": "TEXT"
+          },
+          "required": {
+            "type": "boolean",
+            "example": false
+          },
+          "displayOrder": {
+            "type": "integer",
+            "example": 2
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "ИТ",
+              "Маркетинг"
+            ]
+          }
+        }
+      },
       "ApplicationStatus": {
         "type": "object",
         "properties": {
@@ -1746,11 +2062,6 @@
             "format": "int64",
             "example": 1
           },
-          "managerId": {
-            "type": "integer",
-            "format": "int64",
-            "example": 2
-          },
           "eventStartDate": {
             "type": "string",
             "format": "date-time",
@@ -1822,7 +2133,7 @@
             "format": "int64",
             "example": 1
           },
-          "condition": {
+          "status": {
             "type": "string",
             "enum": [
               "PREPARATION",
@@ -1845,11 +2156,6 @@
             "example": "CRM модуль"
           },
           "adminId": {
-            "type": "integer",
-            "format": "int64",
-            "example": 1
-          },
-          "managerId": {
             "type": "integer",
             "format": "int64",
             "example": 1
@@ -1886,6 +2192,16 @@
           "hasTest": {
             "type": "boolean",
             "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-02-22T22:00:00+05:00"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-02-22T22:00:00+05:00"
           }
         }
       },

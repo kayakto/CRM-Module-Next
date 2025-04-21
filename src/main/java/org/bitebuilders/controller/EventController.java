@@ -54,18 +54,18 @@ public class EventController {
         return ResponseEntity.ok(foundEvent.toEventDTO());
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @PostMapping("/post")
-//    public ResponseEntity<EventDTO> createEvent(@RequestBody EventRequest requestedEvent) {
-//        Event newEvent = requestedEvent.toEvent();
-//        EventDTO eventDTO = eventService.
-//                createOrUpdateEvent(newEvent, requestedEvent.getTestUrl()).toEventDTO();
-//
-//        if (eventDTO != null)
-//            return ResponseEntity.ok(eventDTO);
-//
-//        return ResponseEntity.notFound().build();
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/post")
+    public ResponseEntity<EventDTO> createEvent(@RequestBody EventRequest requestedEvent) {
+        Event newEvent = requestedEvent.toEvent();
+        EventDTO eventDTO = eventService.
+                createOrUpdateEvent(newEvent, requestedEvent.getTestUrl()).toEventDTO();
+
+        if (eventDTO != null)
+            return ResponseEntity.ok(eventDTO);
+
+        return ResponseEntity.notFound().build();
+    }
 
     /**
      * Запускает мероприятие досрочно

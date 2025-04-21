@@ -80,28 +80,28 @@ public class EventService {
     }
 
     // Метод, который сохраняет Event и возвращает его
-//    @Transactional
-//    public Event createOrUpdateEvent(Event event) {
-//        return createOrUpdateEvent(event, null); // Вызов метода с testUrl=null
-//    }
+    @Transactional
+    public Event createOrUpdateEvent(Event event) {
+        return createOrUpdateEvent(event, null); // Вызов метода с testUrl=null
+    }
 
-//    @Transactional
-//    public Event createOrUpdateEvent(Event event, String testUrl) {
-//        Event resultEvent;
-//        // Случай для обновления или создания мероприятия через контроллер
-//        if (event.getStatus() == null) {
-//            validateEvent(event);
-//            resultEvent = updateEventStatus(event);
-//        } else {
-//            resultEvent = eventRepository.save(event);
-//        }
-//
-//        if (resultEvent.isHasTest() && testUrl != null) {
-//            testService.createOrUpdateEventTest(resultEvent.getId(), testUrl);
-//        }
-//
-//        return resultEvent;
-//    }
+    @Transactional
+    public Event createOrUpdateEvent(Event event, String testUrl) {
+        Event resultEvent;
+        // Случай для обновления или создания мероприятия через контроллер
+        if (event.getStatus() == null) {
+            validateEvent(event);
+            resultEvent = updateEventStatus(event);
+        } else {
+            resultEvent = eventRepository.save(event);
+        }
+
+        if (resultEvent.isHasTest() && testUrl != null) {
+            testService.createOrUpdateEventTest(resultEvent.getId(), testUrl);
+        }
+
+        return resultEvent;
+    }
 
     public void deleteAllEvents() {
         eventRepository.deleteAll();
@@ -129,23 +129,23 @@ public class EventService {
 //        return eventRepository.save(eventToHide).getStatus();
 //    }
 
-//    public Event updateEventStatus(Event event) {
-//        Event.Status newStatus = calculateStatus(event);
-//        Event.Status currentStatus = event.getStatus();
-//
-//        if (newStatus != currentStatus) {
-//            if (newStatus == Event.Status.IN_PROGRESS) {
-//                return startEventById(event.getId());
-//            } else if (newStatus == Event.Status.FINISHED){
-//                return endEventById(event.getId());
-//            } else {
-//                event.setStatus(newStatus);
-//                return createOrUpdateEvent(event);
-//            }
-//        }
-//
-//        return event;
-//    }
+    public Event updateEventStatus(Event event) {
+        Event.Status newStatus = calculateStatus(event);
+        Event.Status currentStatus = event.getStatus();
+
+        if (newStatus != currentStatus) {
+            if (newStatus == Event.Status.IN_PROGRESS) {
+                return startEventById(event.getId());
+            } else if (newStatus == Event.Status.FINISHED){
+                return endEventById(event.getId());
+            } else {
+                event.setStatus(newStatus);
+                return createOrUpdateEvent(event);
+            }
+        }
+
+        return event;
+    }
 
     private Event.Status calculateStatus(Event event) {
         OffsetDateTime now = OffsetDateTime.now();
@@ -175,45 +175,34 @@ public class EventService {
         return currentStatus;
     }
 
-//    public Event startEventById(Long eventId) {
-//        Event eventToStart = getEventToStart(eventId);
-//
-//        // Создание групп для мероприятия
-//        List<EventGroup> groups = eventGroupService.createGroups(eventToStart.getId());
-//        System.out.println("Groups created for event ID " + eventToStart.getId() + ": " + groups);
-//
-//        eventToStart.setStatusToStarted();
-//        System.out.println("Event with ID " + eventToStart.getId() + " is now in progress.");
-//
-//        // Сохранение изменений в мероприятии
-//        return createOrUpdateEvent(eventToStart);
-//    }
+    public Event startEventById(Long eventId) {
+        Event eventToStart = getEventToStart(eventId);
 
-//    public Event endEventById(Long eventId) {
-//        Event eventToEnd = getEventById(eventId);
-//        if (eventToEnd.getStatus() != Event.Status.IN_PROGRESS) {
-//            throw new IllegalStateException("Event cannot be ended because it is not in progress");
-//        }
-//
-//        List<EventCurator> curatorsToEnd = eventCuratorService.getStartedEventCurator(eventId);
-//        List<EventStudent> studentToEnd = eventStudentService.getStartedEventStudent(eventId);
-//
-//        for (EventCurator curator:curatorsToEnd) {
-//            curator.setCuratorStatus(StatusRequest.ENDED_EVENT);
-//            eventCuratorService.save(curator);
-//        }
-//
+        eventToStart.setStatusToStarted();
+        System.out.println("Event with ID " + eventToStart.getId() + " is now in progress.");
+
+        // Сохранение изменений в мероприятии
+        return createOrUpdateEvent(eventToStart);
+    }
+
+    public Event endEventById(Long eventId) {
+        Event eventToEnd = getEventById(eventId);
+        if (eventToEnd.getStatus() != Event.Status.IN_PROGRESS) {
+            throw new IllegalStateException("Event cannot be ended because it is not in progress");
+        }
+
+
 //        for (EventStudent student:studentToEnd) {
 //            student.setStudentStatus(StatusRequest.ENDED_EVENT);
 //            eventStudentService.save(student);
 //        }
 //
 //        // TODO если сделать контроллер на окончание меро - меняем даты в меро
-//        eventToEnd.setStatus(Event.Status.FINISHED);
-//        return createOrUpdateEvent(eventToEnd);
-//    }
+        eventToEnd.setStatus(Event.Status.FINISHED);
+        return createOrUpdateEvent(eventToEnd);
+    }
 
-    private Event getEventToStart(Long eventId) {
+    private Event getEventToStart(Long eventId){
         Event eventToStart = getEventById(eventId);
         Event.Status currentStatus = eventToStart.getStatus();
 

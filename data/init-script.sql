@@ -36,7 +36,7 @@ CREATE TABLE events (
 CREATE TABLE event_forms (
     id SERIAL PRIMARY KEY,
     event_id INT REFERENCES events(id) ON DELETE CASCADE,
-    description TEXT,
+    title TEXT,
     is_template BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -49,7 +49,8 @@ CREATE TABLE form_fields (
     name VARCHAR(100) NOT NULL,
     type VARCHAR(50) NOT NULL,
     is_required BOOLEAN DEFAULT FALSE,
-    display_order INT NOT NULL DEFAULT 0
+    display_order INT NOT NULL DEFAULT 0,
+    options JSONB
 );
 
 -- Статусы заявок
@@ -149,8 +150,8 @@ GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO crm_admin;
 
 
 -- Добавляем администратора
-INSERT INTO users_info (first_name, last_name, email, sign, telegram_url, vk_url, role_enum)
-VALUES ('admin', 'admin', 'admin@mail.ru',
+INSERT INTO users_info (id, first_name, last_name, email, sign, telegram_url, vk_url, role_enum)
+VALUES (1, 'admin', 'admin', 'admin@mail.ru',
         '$2a$10$Aa7zaiEhnXHHD3SbBTUxX.gM3eXmSiPXQlYKx9KqJaL2cJ1WcyZHy',
         't.me/admin', 'vk.com/admin', 'ADMIN');
 
@@ -163,7 +164,7 @@ VALUES ('Тестовый проект', 'PREPARATION', 'Описание про
         CURRENT_TIMESTAMP + INTERVAL '14 days', CURRENT_TIMESTAMP + INTERVAL '21 days', 50);
 
 -- Добавляем форму для мероприятия
-INSERT INTO event_forms (event_id, description)
+INSERT INTO event_forms (event_id, title)
 VALUES (1, 'Основная форма регистрации на проект');
 
 -- Добавляем поля формы
