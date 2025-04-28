@@ -167,13 +167,6 @@ VALUES ('Тестовый проект', 'PREPARATION', 'Описание про
 INSERT INTO event_forms (event_id, title)
 VALUES (1, 'Основная форма регистрации на проект');
 
--- Добавляем поля формы
-INSERT INTO form_fields (form_id, name, type, is_required, display_order)
-VALUES
-    (1, 'ФИО', 'text', TRUE, 1),
-    (1, 'Email', 'email', TRUE, 2),
-    (1, 'Телефон', 'tel', TRUE, 3),
-    (1, 'Резюме', 'file', FALSE, 4);
 
 -- Добавляем статусы заявок
 INSERT INTO application_statuses (name, is_system, display_order)
@@ -202,4 +195,23 @@ VALUES
 -- Связываем триггеры со статусами
 INSERT INTO status_triggers (status_id, trigger_id)
 VALUES (1, 1), (2, 2);
+
+CREATE TABLE standard_fields (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    is_required BOOLEAN DEFAULT FALSE,
+    display_order INTEGER,
+    options JSONB
+);
+
+INSERT INTO standard_fields (name, type, is_required, display_order, options) VALUES
+('Образовательное учреждение', 'text', true, 1, NULL),
+('Факультет', 'text', true, 2, NULL),
+('Направление подготовки', 'text', true, 3, NULL),
+('Курс обучения', 'number', true, 4, NULL),
+('Форма обучения', 'select', true, 5, '["Очная", "Заочная", "Очно-заочная"]'),
+('Навыки и компетенции', 'textarea', false, 6, NULL),
+('Опыт работы или стажировок', 'textarea', false, 7, NULL),
+('Ссылка на портфолио / GitHub / резюме', 'url', false, 8, NULL);
 

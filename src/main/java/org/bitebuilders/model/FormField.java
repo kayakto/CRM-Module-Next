@@ -1,5 +1,6 @@
 package org.bitebuilders.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,6 +40,7 @@ public class FormField {
     private List<String> options;
 
     @Column("options") // Это колонка, куда кладётся JSON
+    @JsonIgnore
     private String optionsJson;
 
     public FormField(String name, String type, Boolean isRequired,

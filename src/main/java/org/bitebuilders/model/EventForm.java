@@ -3,10 +3,12 @@ package org.bitebuilders.model;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,11 +24,14 @@ public class EventForm {
     private String title;
 
     @Column("is_template")
-    private Boolean isTemplate;
+    private Boolean isTemplate = false;
 
     @Column("created_at")
     private OffsetDateTime createdAt;
 
     @Column("updated_at")
     private OffsetDateTime updatedAt;
+
+    @Transient
+    private List<FormField> fields;
 }

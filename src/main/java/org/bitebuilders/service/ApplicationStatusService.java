@@ -30,6 +30,7 @@ public class ApplicationStatusService {
         return statusRepository.findById(id)
                 .map(existingStatus -> {
                     existingStatus.setName(newStatus.getName());
+                    existingStatus.setDisplayOrder(newStatus.getDisplayOrder()); // Добавьте эту строку
                     existingStatus.setUpdatedAt(OffsetDateTime.now());
                     return statusRepository.save(existingStatus);
                 });

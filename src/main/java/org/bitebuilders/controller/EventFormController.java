@@ -1,10 +1,9 @@
 package org.bitebuilders.controller;
 
 import org.bitebuilders.controller.requests.CreateFormRequest;
-import org.bitebuilders.controller.requests.FieldRequest;
 import org.bitebuilders.controller.requests.UpdateFormRequest;
 import org.bitebuilders.model.EventForm;
-import org.bitebuilders.model.FormField;
+import org.bitebuilders.model.StandardField;
 import org.bitebuilders.service.EventFormService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +15,11 @@ import java.util.List;
 public class EventFormController {
     private final EventFormService formService;
 
+    @GetMapping("/standard-fields")
+    public List<StandardField> getAllStandardFields() {
+        return formService.getAllStandardFields();
+    }
+
     public EventFormController(EventFormService formService) {
         this.formService = formService;
     }
@@ -24,14 +28,13 @@ public class EventFormController {
     public ResponseEntity<EventForm> createForm(
             @RequestBody CreateFormRequest request) {
         // Преобразуем FieldRequest в FormField
-        List<FormField> fields = request.fields().stream()
-                .map(FieldRequest::toFormField)
-                .toList();
+        List<Long> fieldIds = request.selectedFieldIds();
 
         EventForm form = formService.createForm(
                 request.eventId(),
                 request.title(),
-                fields
+                request.isTemplate(),
+                fieldIds
         );
         return ResponseEntity.ok(form);
     }
@@ -39,16 +42,13 @@ public class EventFormController {
     @PutMapping("/{id}")
     public ResponseEntity<EventForm> updateForm(
             @PathVariable Long id,
-            @RequestBody UpdateFormRequest request) {  // Используем DTO для тела запроса
-
-        List<FormField> fields = request.fields().stream()
-                .map(FieldRequest::toFormField)
-                .toList();
+            @RequestBody UpdateFormRequest request) {
 
         return ResponseEntity.ok(formService.updateForm(
                 id,
                 request.title(),
-                fields
+                request.selectedFieldIds(),
+                request.isTemplate()
         ));
     }
 
@@ -59,8 +59,9 @@ public class EventFormController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EventForm>> getAllForms() {
-        return ResponseEntity.ok(formService.getAllForms());
+    public ResponseEntity<List<EventForm>> getAllForms(
+            @RequestParam(required = false, defaultValue = "false") boolean withFields) {
+        return ResponseEntity.ok(formService.getAllForms(withFields));
     }
 
     @GetMapping("/{id}")

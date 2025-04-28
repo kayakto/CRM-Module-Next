@@ -1474,13 +1474,37 @@
         }
       }
     },
+    "/api/forms/standard-fields": {
+      "get": {
+        "tags": [
+          "event-forms"
+        ],
+        "summary": "Получить все стандартные поля",
+        "description": "Возвращает список всех доступных стандартных полей для использования в формах",
+        "responses": {
+          "200": {
+            "description": "Успешный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormFieldResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/forms": {
       "post": {
         "tags": [
           "event-forms"
         ],
         "summary": "Создать новую анкету",
-        "description": "Создает анкету с указанными полями",
+        "description": "Создает анкету с выбранными стандартными полями",
         "requestBody": {
           "required": true,
           "content": {
@@ -1503,7 +1527,14 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequestResponse"
+            "description": "Неверный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -1512,16 +1543,75 @@
           "event-forms"
         ],
         "summary": "Получить все анкеты",
-        "description": "Возвращает список всех анкет",
+        "description": "Возвращает список всех анкет.\nПо умолчанию возвращаются только основные данные без полей.\nДля получения полей установите параметр `withFields=true`.\n",
+        "parameters": [
+          {
+            "name": "withFields",
+            "in": "query",
+            "description": "Включить поля формы в ответ",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Успешный запрос",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FormShortResponse"
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FormShortResponse"
+                      }
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FormResponse"
+                      }
+                    }
+                  ]
+                },
+                "examples": {
+                  "basic": {
+                    "value": [
+                      {
+                        "id": 1,
+                        "eventId": 1,
+                        "title": "Основная форма",
+                        "isTemplate": false,
+                        "createdAt": "2025-04-28T16:07:55.121684+05:00",
+                        "updatedAt": "2025-04-28T16:07:55.121684+05:00"
+                      }
+                    ]
+                  },
+                  "withFields": {
+                    "value": [
+                      {
+                        "id": 1,
+                        "eventId": 1,
+                        "title": "Основная форма",
+                        "isTemplate": false,
+                        "createdAt": "2025-04-28T16:07:55.121684+05:00",
+                        "updatedAt": "2025-04-28T16:07:55.121684+05:00",
+                        "fields": [
+                          {
+                            "id": 1,
+                            "formId": 1,
+                            "name": "Учебное заведение",
+                            "type": "text",
+                            "isRequired": true,
+                            "displayOrder": 1,
+                            "options": []
+                          }
+                        ]
+                      }
+                    ]
                   }
                 }
               }
@@ -1544,7 +1634,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "example": 1
           }
         ],
         "responses": {
@@ -1559,7 +1650,14 @@
             }
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundResponse"
+            "description": "Анкета не найдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -1568,7 +1666,7 @@
           "event-forms"
         ],
         "summary": "Обновить анкету",
-        "description": "Обновляет название и поля анкеты",
+        "description": "Обновляет название и выбранные стандартные поля анкеты",
         "parameters": [
           {
             "name": "id",
@@ -1576,7 +1674,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "example": 1
           }
         ],
         "requestBody": {
@@ -1599,6 +1698,12 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Неверный запрос"
+          },
+          "404": {
+            "description": "Анкета или указанные поля не найдены"
           }
         }
       },
@@ -1615,7 +1720,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "example": 1
           }
         ],
         "responses": {
@@ -1623,7 +1729,7 @@
             "description": "Анкета успешно удалена"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundResponse"
+            "description": "Анкета не найдена"
           }
         }
       }
@@ -1718,35 +1824,64 @@
             "type": "string",
             "example": "Анкета для стажировки"
           },
+          "isTemplate": {
+            "type": "boolean",
+            "example": false
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-04-15T10:30:00Z"
+            "example": "2025-04-28T16:15:30.127633+05:00"
           }
         }
       },
       "FormResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/FormShortResponse"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "fields": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/FieldResponse"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "FieldResponse": {
         "type": "object",
         "properties": {
           "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "eventId": {
+            "type": "integer",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Анкета для стажировки"
+          },
+          "isTemplate": {
+            "type": "boolean",
+            "example": false,
+            "default": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-04-28T16:15:30.127633+05:00"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFieldResponse"
+            }
+          }
+        }
+      },
+      "FormFieldResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "formId": {
             "type": "integer",
             "example": 1
           },
@@ -1756,15 +1891,9 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "TEXT",
-              "SELECT",
-              "CHECKBOX",
-              "RADIO"
-            ],
-            "example": "TEXT"
+            "example": "text"
           },
-          "required": {
+          "isRequired": {
             "type": "boolean",
             "example": true
           },
@@ -1777,9 +1906,10 @@
             "items": {
               "type": "string"
             },
+            "nullable": true,
             "example": [
-              "Бакалавр",
-              "Магистр"
+              "Очная",
+              "Заочная"
             ]
           }
         }
@@ -1789,7 +1919,7 @@
         "required": [
           "eventId",
           "title",
-          "fields"
+          "selectedFieldIds"
         ],
         "properties": {
           "eventId": {
@@ -1800,11 +1930,21 @@
             "type": "string",
             "example": "Анкета для стажировки"
           },
-          "fields": {
+          "isTemplate": {
+            "type": "boolean",
+            "example": false,
+            "default": false
+          },
+          "selectedFieldIds": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/FieldRequest"
-            }
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
           }
         }
       },
@@ -1812,59 +1952,26 @@
         "type": "object",
         "required": [
           "title",
-          "fields"
+          "selectedFieldIds"
         ],
         "properties": {
           "title": {
             "type": "string",
             "example": "Обновленная анкета"
           },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FieldRequest"
-            }
-          }
-        }
-      },
-      "FieldRequest": {
-        "type": "object",
-        "required": [
-          "name",
-          "type",
-          "required"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "Факультет"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "TEXT",
-              "SELECT",
-              "CHECKBOX",
-              "RADIO"
-            ],
-            "example": "TEXT"
-          },
-          "required": {
+          "isTemplate": {
             "type": "boolean",
-            "example": false
+            "example": true
           },
-          "displayOrder": {
-            "type": "integer",
-            "example": 2
-          },
-          "options": {
+          "selectedFieldIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "integer"
             },
             "example": [
-              "ИТ",
-              "Маркетинг"
+              1,
+              2,
+              4
             ]
           }
         }

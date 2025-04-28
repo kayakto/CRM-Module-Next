@@ -4,5 +4,6 @@ import java.util.List;
 
 public record UpdateFormRequest(
         String title,
-        List<FieldRequest> fields
+        List<Long> selectedFieldIds,
+        Boolean isTemplate
 ) {}

@@ -5,5 +5,6 @@ import java.util.List;
 public record CreateFormRequest(
         Long eventId,
         String title,
-        List<FieldRequest> fields
+        List<Long> selectedFieldIds,
+        Boolean isTemplate
 ) {}
