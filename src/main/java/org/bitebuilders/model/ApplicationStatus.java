@@ -13,17 +13,19 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @Table("application_statuses")
-@AllArgsConstructor
 @NoArgsConstructor
 public class ApplicationStatus {
     @Id
     private Long id;
 
+    @Column("event_id")
+    private Long eventId;
+
     @Column("name")
     private String name;
 
     @Column("is_system")
-    private Boolean isSystem;
+    private Boolean isSystem = false;
 
     @Column("display_order")
     private Integer displayOrder;
@@ -34,7 +36,11 @@ public class ApplicationStatus {
     public ApplicationStatus(String name, Integer displayOrder) {
         this.name = name;
         this.displayOrder = displayOrder;
-        isSystem = false;
-        updatedAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
+    }
+
+    // Метод для проверки системного статуса
+    public boolean isSystemStatus() {
+        return Boolean.TRUE.equals(isSystem);
     }
 }

@@ -3,11 +3,14 @@ package org.bitebuilders.model;
 import lombok.*;
 import org.bitebuilders.controller.dto.EventDTO;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Table("events")
@@ -57,6 +60,16 @@ public class Event {
 
     @Column("chat_url")
     private String chatUrl;
+
+    @Transient
+    private List<ApplicationStatus> customStatuses;
+
+    public void addCustomStatus(ApplicationStatus status) {
+        if (this.customStatuses == null) {
+            this.customStatuses = new ArrayList<>();
+        }
+        this.customStatuses.add(status);
+    }
 
     public enum Status {
         PREPARATION, // Статус "Подготовка" : (текущая дата < enrollment_start_date)

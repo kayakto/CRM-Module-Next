@@ -31,7 +31,10 @@
       "description": "Тут вообще ничего не работает, это заготовка для нового backend"
     },
     {
-      "name": "status-controller"
+      "name": "Global statuses"
+    },
+    {
+      "name": "Event statuses"
     }
   ],
   "paths": {
@@ -1328,102 +1331,48 @@
         }
       }
     },
-    "/api/statuses/{id}": {
-      "put": {
+    "/api/statuses": {
+      "get": {
         "tags": [
-          "status-controller"
+          "Global statuses"
         ],
-        "summary": "Обновить статус",
-        "description": "Обновляет название существующего статуса по ID.\nДоступен только для администраторов.\n",
-        "operationId": "updateStatus",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "ID статуса для обновления"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApplicationStatusRequest"
-              }
-            }
-          }
-        },
+        "summary": "Получить все глобальные статусы",
+        "description": "Возвращает список всех системных статусов, доступных для всех мероприятий",
         "responses": {
           "200": {
-            "description": "Статус успешно обновлен",
+            "description": "Успешно получен список статусов",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApplicationStatus"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationStatus"
+                  }
                 }
               }
             }
           },
-          "400": {
-            "description": "Неверный запрос"
-          },
-          "404": {
-            "description": "Статус не найден"
-          },
           "500": {
-            "description": "Внутренняя ошибка сервера"
+            "description": "Ошибка сервера"
           }
         }
       },
-      "delete": {
-        "tags": [
-          "status-controller"
-        ],
-        "summary": "Удалить статус",
-        "description": "Удаляет статус по ID.\nДоступен только для администраторов.\n",
-        "operationId": "deleteStatus",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "ID статуса для удаления"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Статус успешно удален"
-          },
-          "404": {
-            "description": "Статус не найден"
-          },
-          "500": {
-            "description": "Внутренняя ошибка сервера"
-          }
-        }
-      }
-    },
-    "/api/statuses": {
       "post": {
         "tags": [
-          "status-controller"
+          "Global statuses"
         ],
-        "summary": "Создать новый статус",
-        "description": "Создает новый статус в системе.\nДоступен только для администраторов.\n",
-        "operationId": "createStatus",
+        "summary": "Создать новый глобальный статус",
+        "description": "Создает новый системный статус, доступный для всех мероприятий",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ApplicationStatusRequest"
+                "$ref": "#/components/schemas/StatusRequest"
+              },
+              "example": {
+                "name": "Одобрено",
+                "displayOrder": 3
               }
             }
           }
@@ -1440,36 +1389,243 @@
             }
           },
           "400": {
-            "description": "Неверный запрос (например, пустое название статуса)"
+            "description": "Ошибка валидации:\n- Не указано название\n- Некорректный порядок отображения\n"
           },
           "500": {
-            "description": "Внутренняя ошибка сервера"
+            "description": "Ошибка сервера"
+          }
+        }
+      }
+    },
+    "/api/statuses/{id}": {
+      "put": {
+        "tags": [
+          "Global statuses"
+        ],
+        "summary": "Обновить глобальный статус",
+        "description": "Изменяет название или порядок отображения системного статуса",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 5,
+            "description": "ID статуса для обновления"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Статус успешно обновлен"
+          },
+          "400": {
+            "description": "Некорректные данные"
+          },
+          "404": {
+            "description": "Статус не найден"
           }
         }
       },
+      "delete": {
+        "tags": [
+          "Global statuses"
+        ],
+        "summary": "Удалить глобальный статус",
+        "description": "Удаляет системный статус, если нет связанных заявок",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 5,
+            "description": "ID статуса для удаления"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Статус успешно удален"
+          },
+          "404": {
+            "description": "Статус не найден"
+          },
+          "409": {
+            "description": "Нельзя удалить - есть связанные заявки"
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/statuses": {
       "get": {
         "tags": [
-          "status-controller"
+          "Event statuses"
         ],
-        "summary": "Получить все статусы",
-        "description": "Возвращает список всех доступных статусов.\nДоступен для всех аутентифицированных пользователей.\n",
-        "operationId": "getAllStatuses",
+        "summary": "Получить статусы мероприятия",
+        "description": "Возвращает все статусы, связанные с конкретным мероприятием",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "ID мероприятия"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Успешный запрос",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ApplicationStatus"
-                  }
-                }
+            "description": "Успешно получен список статусов"
+          },
+          "404": {
+            "description": "Мероприятие не найдено"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Event statuses"
+        ],
+        "summary": "Добавить статус к мероприятию",
+        "description": "Создает новый статус для конкретного мероприятия",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "ID мероприятия"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Статус успешно добавлен"
           },
-          "500": {
-            "description": "Внутренняя ошибка сервера"
+          "400": {
+            "description": "Некорректные данные"
+          },
+          "404": {
+            "description": "Мероприятие не найдено"
+          },
+          "409": {
+            "description": "Статус с таким порядком уже существует"
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/statuses/{statusId}": {
+      "put": {
+        "tags": [
+          "Event statuses"
+        ],
+        "summary": "Обновить статус мероприятия",
+        "description": "Изменяет статус конкретного мероприятия",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "ID мероприятия"
+          },
+          {
+            "name": "statusId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 3,
+            "description": "ID статуса для обновления"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Статус успешно обновлен"
+          },
+          "404": {
+            "description": "Мероприятие или статус не найдены"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Event statuses"
+        ],
+        "summary": "Удалить статус мероприятия",
+        "description": "Удаляет статус из мероприятия, если нет связанных заявок",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "ID мероприятия"
+          },
+          {
+            "name": "statusId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 3,
+            "description": "ID статуса для удаления"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Статус успешно удален"
+          },
+          "404": {
+            "description": "Мероприятие или статус не найдены"
+          },
+          "409": {
+            "description": "Нельзя удалить - есть связанные заявки"
           }
         }
       }
@@ -1813,6 +1969,67 @@
       }
     },
     "schemas": {
+      "ApplicationStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1,
+            "description": "Уникальный идентификатор"
+          },
+          "name": {
+            "type": "string",
+            "example": "На рассмотрении",
+            "description": "Название статуса"
+          },
+          "isSystem": {
+            "type": "boolean",
+            "example": false,
+            "description": "Является ли системным"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "example": 2,
+            "description": "Порядок отображения"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-05-20T14:30:00Z",
+            "description": "Дата последнего обновления"
+          },
+          "eventId": {
+            "type": "integer",
+            "example": 5,
+            "nullable": true,
+            "description": "ID мероприятия (null для системных)"
+          }
+        }
+      },
+      "StatusRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "displayOrder"
+        ],
+        "description": "Данные для создания/обновления статуса",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Тестирование",
+            "minLength": 2,
+            "maxLength": 100,
+            "description": "Название статуса (2-100 символов)"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "example": 3,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Порядок отображения (1-100)"
+          }
+        }
+      },
       "FormShortResponse": {
         "type": "object",
         "properties": {
@@ -1975,40 +2192,6 @@
             ]
           }
         }
-      },
-      "ApplicationStatus": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true,
-            "description": "Уникальный идентификатор статуса"
-          },
-          "name": {
-            "type": "string",
-            "description": "Название статуса",
-            "example": "В обработке"
-          },
-          "isSystem": {
-            "type": "boolean",
-            "example": false
-          },
-          "displayOrder": {
-            "type": "integer",
-            "example": 1
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-11-01T22:00:00+05:00"
-          }
-        },
-        "required": [
-          "name",
-          "isSystem",
-          "displayOrder",
-          "updatedAt"
-        ]
       },
       "ApplicationStatusRequest": {
         "type": "object",

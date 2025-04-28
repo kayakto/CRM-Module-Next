@@ -1,55 +1,67 @@
 package org.bitebuilders.controller;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.bitebuilders.controller.requests.ApplicationStatusRequest;
+import org.bitebuilders.controller.requests.StatusRequest;
+import org.bitebuilders.controller.requests.StatusUpdateRequest;
+import org.bitebuilders.exception.CustomNotFoundException;
 import org.bitebuilders.model.ApplicationStatus;
 import org.bitebuilders.service.ApplicationStatusService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/statuses")
+@RequiredArgsConstructor
 public class ApplicationStatusController {
-
     private final ApplicationStatusService statusService;
 
-    public ApplicationStatusController(ApplicationStatusService statusService) {
-        this.statusService = statusService;
-    }
-
-    // Создание статуса
+    // Создание глобального статуса
     @PostMapping
-    public ResponseEntity<ApplicationStatus> createStatus(@RequestBody ApplicationStatusRequest statusRequest) {
-        ApplicationStatus createdStatus = statusService
-                .createStatus(statusRequest.toApplicationStatus());
+    public ResponseEntity<ApplicationStatus> createStatus(
+            @Valid @RequestBody StatusRequest request) {
+        ApplicationStatus status = new ApplicationStatus();
+        status.setName(request.getName());
+        status.setDisplayOrder(request.getDisplayOrder());
+
+        ApplicationStatus createdStatus = statusService.createGlobalStatus(status);
         return ResponseEntity.ok(createdStatus);
     }
 
-    // Обновление статуса
     @PutMapping("/{id}")
     public ResponseEntity<ApplicationStatus> updateStatus(
             @PathVariable Long id,
-            @RequestBody ApplicationStatus newStatus) {
+            @Valid @RequestBody StatusUpdateRequest request) {
 
-        return statusService.updateStatus(id, newStatus)
+        ApplicationStatus statusUpdate = new ApplicationStatus();
+        statusUpdate.setName(request.getName());
+        statusUpdate.setDisplayOrder(request.getDisplayOrder());
+
+        return statusService.updateGlobalStatus(id, statusUpdate)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Удаление статуса
+    // Удаление глобального статуса
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteStatus(@PathVariable Long id) {
-        if (statusService.deleteStatus(id)) {
-            return ResponseEntity.ok().build();
-        } else {
+        try {
+            statusService.deleteGlobalStatus(id);
+            return ResponseEntity.noContent().build();
+        } catch (CustomNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 
-    // Получение всех статусов
+    // Получение всех глобальных статусов
     @GetMapping
     public ResponseEntity<List<ApplicationStatus>> getAllStatuses() {
-        List<ApplicationStatus> statuses = statusService.getAllStatuses();
+        List<ApplicationStatus> statuses = statusService.getAllGlobalStatuses();
         return ResponseEntity.ok(statuses);
     }
 }

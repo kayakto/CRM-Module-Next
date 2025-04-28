@@ -53,28 +53,46 @@ CREATE TABLE form_fields (
     options JSONB
 );
 
--- Статусы заявок
 CREATE TABLE application_statuses (
     id SERIAL PRIMARY KEY,
+    event_id BIGINT REFERENCES events(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     is_system BOOLEAN DEFAULT FALSE,
-    display_order INT NOT NULL DEFAULT 0,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    display_order INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uniq_status_order UNIQUE (event_id, display_order),
+    CONSTRAINT chk_system_status CHECK (is_system = FALSE OR event_id IS NULL)
 );
 
--- Заявки
+-- Затем вставляем системные статусы БЕЗ event_id:
+INSERT INTO application_statuses (name, is_system, display_order)
+VALUES
+    ('Отправил(а) заявку', TRUE, 1),
+    ('В обработке', TRUE, 2),
+    ('Одобрена', TRUE, 3),
+    ('Отклонена', TRUE, 4);
+
+-- Улучшенная таблица заявок
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
     event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    surname VARCHAR(50),
-    email VARCHAR(255) NOT NULL,
-    telegram_url VARCHAR(255),
-    status_id INT REFERENCES application_statuses(id) ON DELETE SET NULL,
-    form_data JSONB,
+    user_id BIGINT REFERENCES users_info(id) ON DELETE SET NULL,
+    status_id INT NOT NULL REFERENCES application_statuses(id),
+    form_data JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- История статусов с причиной изменения
+CREATE TABLE application_status_history (
+    id SERIAL PRIMARY KEY,
+    application_id BIGINT NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+    from_status_id BIGINT REFERENCES application_statuses(id),
+    to_status_id BIGINT NOT NULL REFERENCES application_statuses(id),
+    changed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    changed_by BIGINT REFERENCES users_info(id),
+    reason TEXT
 );
 
 -- Триггеры
@@ -168,14 +186,6 @@ INSERT INTO event_forms (event_id, title)
 VALUES (1, 'Основная форма регистрации на проект');
 
 
--- Добавляем статусы заявок
-INSERT INTO application_statuses (name, is_system, display_order)
-VALUES
-    ('Отправил(а) заявку', TRUE, 1),
-    ('В обработке', TRUE, 2),
-    ('Одобрена', TRUE, 3),
-    ('Отклонена', TRUE, 4);
-
 -- Добавляем тестовые заявки
 INSERT INTO applications (event_id, first_name, last_name, email, status_id, form_data)
 VALUES
@@ -215,3 +225,29 @@ INSERT INTO standard_fields (name, type, is_required, display_order, options) VA
 ('Опыт работы или стажировок', 'textarea', false, 7, NULL),
 ('Ссылка на портфолио / GitHub / резюме', 'url', false, 8, NULL);
 
+
+
+ALTER TABLE applications ADD COLUMN user_id BIGINT REFERENCES users_info(id) ON DELETE SET NULL;
+CREATE INDEX idx_applications_email ON applications(email);
+
+ALTER TABLE events ADD CONSTRAINT check_dates CHECK (
+    enrollment_start_date <= enrollment_end_date AND
+    enrollment_end_date <= event_start_date AND
+    event_start_date <= event_end_date
+);
+
+-- Удаляем дублирующее определение user_id
+ALTER TABLE applications DROP COLUMN IF EXISTS user_id;
+ALTER TABLE applications ADD COLUMN user_id BIGINT REFERENCES users_info(id) ON DELETE SET NULL;
+
+-- Удаляем лишний индекс
+DROP INDEX IF EXISTS idx_applications_email;
+
+-- Исправляем вставку в applications
+INSERT INTO applications (event_id, user_id, status_id, form_data)
+VALUES
+    (1, 1, 1, '{"first_name": "Иван", "last_name": "Иванов", "email": "ivan@example.com", "phone": "+79123456789", "resume": "ivan_resume.pdf"}'),
+    (1, 1, 2, '{"first_name": "Петр", "last_name": "Петров", "email": "petr@example.com", "phone": "+79876543210", "resume": "petr_cv.pdf"}');
+
+-- Добавляем проверку для display_order
+ALTER TABLE application_statuses ADD CONSTRAINT chk_display_order CHECK (display_order > 0);

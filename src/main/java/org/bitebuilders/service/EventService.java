@@ -1,10 +1,12 @@
 package org.bitebuilders.service;
 
+import lombok.RequiredArgsConstructor;
 import org.bitebuilders.component.UserContext;
 import org.bitebuilders.enums.StatusRequest;
 import org.bitebuilders.enums.UserRole;
 import org.bitebuilders.exception.EventNotFoundException;
 import org.bitebuilders.model.*;
+import org.bitebuilders.repository.ApplicationStatusJdbcRepository;
 import org.bitebuilders.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -28,12 +30,15 @@ public class EventService {
 
     private final EventTestService testService;
 
+    private final ApplicationStatusJdbcRepository applicationStatusRepository;
+
     @Autowired
-    public EventService(EventRepository eventRepository, UserContext userContext, UserInfoService userInfoService, EventTestService testService) {
+    public EventService(EventRepository eventRepository, UserContext userContext, UserInfoService userInfoService, EventTestService testService, ApplicationStatusJdbcRepository applicationStatusRepository) {
         this.eventRepository = eventRepository;
         this.userContext = userContext;
         this.userInfoService = userInfoService;
         this.testService = testService;
+        this.applicationStatusRepository = applicationStatusRepository;
     }
 
     public void isPresentEvent(Long eventId) {
@@ -255,5 +260,24 @@ public class EventService {
         }
 
         return true;
+    }
+
+
+    public Event getEventWithStatuses(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        // Загружаем кастомные статусы (не системные)
+        List<ApplicationStatus> customStatuses = applicationStatusRepository.findByEventId(eventId).stream()
+                .filter(status -> !status.isSystemStatus())
+                .toList();
+
+        event.setCustomStatuses(customStatuses);
+        return event;
+    }
+
+    public void addStatusToEvent(Long eventId, ApplicationStatus status) {
+        status.setEventId(eventId);
+        applicationStatusRepository.save(status);
     }
 }
