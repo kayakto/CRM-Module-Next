@@ -35,7 +35,7 @@ public class Application {
     private Long statusId;
 
     @Column("form_data")
-    private String formData; // JsonNode/ObjectMapper сделать
+    private String formData;
 
     @Column("created_at")
     private OffsetDateTime createdAt;

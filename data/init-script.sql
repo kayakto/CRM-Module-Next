@@ -65,24 +65,21 @@ CREATE TABLE application_statuses (
     CONSTRAINT chk_system_status CHECK (is_system = FALSE OR event_id IS NULL)
 );
 
--- Затем вставляем системные статусы БЕЗ event_id:
-INSERT INTO application_statuses (name, is_system, display_order)
-VALUES
-    ('Отправил(а) заявку', TRUE, 1),
-    ('В обработке', TRUE, 2),
-    ('Одобрена', TRUE, 3),
-    ('Отклонена', TRUE, 4);
-
--- Улучшенная таблица заявок
+-- Создаем таблицу заявок в соответствии с Java-классом
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
-    event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    user_id BIGINT REFERENCES users_info(id) ON DELETE SET NULL,
-    status_id INT NOT NULL REFERENCES application_statuses(id),
+    event_id BIGINT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    surname VARCHAR(100),
+    email VARCHAR(100) NOT NULL,
+    telegram_url VARCHAR(255),
+    status_id BIGINT NOT NULL REFERENCES application_statuses(id),
     form_data JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- История статусов с причиной изменения
 CREATE TABLE application_status_history (
@@ -166,7 +163,6 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO crm_admin;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO crm_admin;
 GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO crm_admin;
 
-
 -- Добавляем администратора
 INSERT INTO users_info (id, first_name, last_name, email, sign, telegram_url, vk_url, role_enum)
 VALUES (1, 'admin', 'admin', 'admin@mail.ru',
@@ -185,14 +181,12 @@ VALUES ('Тестовый проект', 'PREPARATION', 'Описание про
 INSERT INTO event_forms (event_id, title)
 VALUES (1, 'Основная форма регистрации на проект');
 
-
--- Добавляем тестовые заявки
-INSERT INTO applications (event_id, first_name, last_name, email, status_id, form_data)
+INSERT INTO application_statuses (name, is_system, display_order)
 VALUES
-    (1, 'Иван', 'Иванов', 'ivan@example.com', 1,
-     '{"phone": "+79123456789", "resume": "ivan_resume.pdf"}'),
-    (1, 'Петр', 'Петров', 'petr@example.com', 2,
-     '{"phone": "+79876543210", "resume": "petr_cv.pdf"}');
+    ('Отправил(а) заявку', TRUE, 1),
+    ('В обработке', TRUE, 2),
+    ('Одобрена', TRUE, 3),
+    ('Отклонена', TRUE, 4);
 
 -- Добавляем триггеры
 INSERT INTO triggers (name, type, parameters)
@@ -225,29 +219,17 @@ INSERT INTO standard_fields (name, type, is_required, display_order, options) VA
 ('Опыт работы или стажировок', 'textarea', false, 7, NULL),
 ('Ссылка на портфолио / GitHub / резюме', 'url', false, 8, NULL);
 
-
-
-ALTER TABLE applications ADD COLUMN user_id BIGINT REFERENCES users_info(id) ON DELETE SET NULL;
-CREATE INDEX idx_applications_email ON applications(email);
-
 ALTER TABLE events ADD CONSTRAINT check_dates CHECK (
     enrollment_start_date <= enrollment_end_date AND
     enrollment_end_date <= event_start_date AND
     event_start_date <= event_end_date
 );
 
--- Удаляем дублирующее определение user_id
-ALTER TABLE applications DROP COLUMN IF EXISTS user_id;
-ALTER TABLE applications ADD COLUMN user_id BIGINT REFERENCES users_info(id) ON DELETE SET NULL;
-
--- Удаляем лишний индекс
-DROP INDEX IF EXISTS idx_applications_email;
-
--- Исправляем вставку в applications
-INSERT INTO applications (event_id, user_id, status_id, form_data)
-VALUES
-    (1, 1, 1, '{"first_name": "Иван", "last_name": "Иванов", "email": "ivan@example.com", "phone": "+79123456789", "resume": "ivan_resume.pdf"}'),
-    (1, 1, 2, '{"first_name": "Петр", "last_name": "Петров", "email": "petr@example.com", "phone": "+79876543210", "resume": "petr_cv.pdf"}');
-
 -- Добавляем проверку для display_order
 ALTER TABLE application_statuses ADD CONSTRAINT chk_display_order CHECK (display_order > 0);
+
+GRANT ALL PRIVILEGES ON TABLE standard_fields TO crm_admin;
+GRANT USAGE ON SEQUENCE standard_fields_id_seq TO crm_admin;
+
+GRANT ALL PRIVILEGES ON TABLE applications TO crm_admin;
+GRANT ALL PRIVILEGES ON SEQUENCE applications_id_seq TO crm_admin;
