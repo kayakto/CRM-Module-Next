@@ -1,5 +1,6 @@
 package org.bitebuilders.exception;
 
+import jakarta.validation.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -31,6 +32,22 @@ public class CRMModuleExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ErrorResponse handleCustomIllegalArgumentException(IllegalArgumentException e)
+    {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorResponse handleCustomValidationException(ValidationException e)
+    {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateApplicationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorResponse handleDuplicateApplicationException(DuplicateApplicationException e)
     {
         return new ErrorResponse(e.getMessage());
     }

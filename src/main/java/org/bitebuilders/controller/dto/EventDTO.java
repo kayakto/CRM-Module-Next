@@ -16,16 +16,14 @@ import java.time.OffsetDateTime;
 public class EventDTO {
     private final Long id;
     private final Event.Status status;
-    private final String descriptionText;
+    private final String description;
     private final String title;
     private final Long adminId;
     private final OffsetDateTime eventStartDate;
     private final OffsetDateTime eventEndDate;
-    private final String chatUrl;
     private final OffsetDateTime enrollmentStartDate;
     private final OffsetDateTime enrollmentEndDate;
     private final int numberSeatsStudent;
-    private final boolean hasTest;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

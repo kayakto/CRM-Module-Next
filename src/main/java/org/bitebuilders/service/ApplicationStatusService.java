@@ -60,7 +60,7 @@ public class ApplicationStatusService {
     }
 
     public List<ApplicationStatus> getAllGlobalStatuses() {
-        return statusRepository.findByIsSystem(true);
+        return statusRepository.findGlobalStatuses();
     }
 
 

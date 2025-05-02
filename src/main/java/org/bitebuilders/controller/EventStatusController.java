@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/events/{eventId}/statuses")
+@RequestMapping("/events/{eventId}/statuses")
 @RequiredArgsConstructor
 public class EventStatusController {
     private final ApplicationStatusService statusService;

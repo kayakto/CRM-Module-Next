@@ -28,7 +28,6 @@ CREATE TABLE events (
     event_end_date TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    has_test BOOLEAN DEFAULT FALSE,
     number_seats_students INT NOT NULL
 );
 
@@ -61,8 +60,7 @@ CREATE TABLE application_statuses (
     display_order INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uniq_status_order UNIQUE (event_id, display_order),
-    CONSTRAINT chk_system_status CHECK (is_system = FALSE OR event_id IS NULL)
+    CONSTRAINT uniq_status_order UNIQUE (event_id, display_order)
 );
 
 -- Создаем таблицу заявок в соответствии с Java-классом
@@ -87,9 +85,7 @@ CREATE TABLE application_status_history (
     application_id BIGINT NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     from_status_id BIGINT REFERENCES application_statuses(id),
     to_status_id BIGINT NOT NULL REFERENCES application_statuses(id),
-    changed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    changed_by BIGINT REFERENCES users_info(id),
-    reason TEXT
+    changed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Триггеры
@@ -177,9 +173,6 @@ VALUES ('Тестовый проект', 'PREPARATION', 'Описание про
         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '7 days',
         CURRENT_TIMESTAMP + INTERVAL '14 days', CURRENT_TIMESTAMP + INTERVAL '21 days', 50);
 
--- Добавляем форму для мероприятия
-INSERT INTO event_forms (event_id, title)
-VALUES (1, 'Основная форма регистрации на проект');
 
 INSERT INTO application_statuses (name, is_system, display_order)
 VALUES
@@ -233,3 +226,39 @@ GRANT USAGE ON SEQUENCE standard_fields_id_seq TO crm_admin;
 
 GRANT ALL PRIVILEGES ON TABLE applications TO crm_admin;
 GRANT ALL PRIVILEGES ON SEQUENCE applications_id_seq TO crm_admin;
+
+
+-- Удаляем отдельные колонки из applications и переносим их в form_data
+ALTER TABLE applications
+DROP COLUMN first_name,
+DROP COLUMN last_name,
+DROP COLUMN surname,
+DROP COLUMN email,
+DROP COLUMN telegram_url;
+
+-- Создаем таблицу для системных полей
+CREATE TABLE system_fields (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    type VARCHAR(50) NOT NULL,
+    is_required BOOLEAN DEFAULT TRUE,
+    display_order INTEGER NOT NULL
+);
+
+-- Добавляем системные поля
+INSERT INTO system_fields (name, type, is_required, display_order) VALUES
+('first_name', 'text', true, 1),
+('last_name', 'text', true, 2),
+('surname', 'text', false, 3),
+('email', 'email', true, 4),
+('telegram_url', 'url', true, 5),
+('vk_url', 'url', false, 6);
+
+-- Добавляем связь между формами и системными полями
+CREATE TABLE form_system_fields (
+    form_id INT NOT NULL REFERENCES event_forms(id) ON DELETE CASCADE,
+    system_field_id INT NOT NULL REFERENCES system_fields(id) ON DELETE CASCADE,
+    is_required BOOLEAN DEFAULT TRUE,
+    display_order INT NOT NULL,
+    PRIMARY KEY (form_id, system_field_id)
+);

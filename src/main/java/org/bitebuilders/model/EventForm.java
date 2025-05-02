@@ -1,7 +1,10 @@
 package org.bitebuilders.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.bitebuilders.controller.dto.EventDTO;
+import org.bitebuilders.controller.dto.FormDTO;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
@@ -34,4 +37,7 @@ public class EventForm {
 
     @Transient
     private List<FormField> fields;
+
+    @Transient
+    private List<SystemField> systemFields;
 }

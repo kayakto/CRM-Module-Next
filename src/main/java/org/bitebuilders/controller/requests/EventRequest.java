@@ -12,27 +12,24 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class EventRequest {
     private final String title;
-    private final String descriptionText;
+    private final String description;
     private final Long adminId;
     private final OffsetDateTime eventStartDate;
     private final OffsetDateTime eventEndDate;
     private final OffsetDateTime enrollmentStartDate;
     private final OffsetDateTime enrollmentEndDate;
-    private final String chatUrl;
     private final int numberSeatsStudent;
-    private final boolean hasTest;
-    private final String testUrl;
 
     public Event toEvent() {
-        return new Event(descriptionText, title,
+        return new Event(description, title,
                 adminId, eventStartDate, eventEndDate,
-                enrollmentStartDate, enrollmentEndDate, chatUrl, numberSeatsStudent, hasTest);
+                enrollmentStartDate, enrollmentEndDate, numberSeatsStudent);
     }
 
     public Event toEvent(Long eventId) {
         return new Event(eventId,
-                descriptionText, title,
+                description, title,
                 adminId, eventStartDate, eventEndDate,
-                enrollmentStartDate, enrollmentEndDate, chatUrl, numberSeatsStudent, hasTest);
+                enrollmentStartDate, enrollmentEndDate, numberSeatsStudent);
     }
 }

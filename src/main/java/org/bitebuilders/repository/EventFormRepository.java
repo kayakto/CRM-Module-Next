@@ -5,8 +5,10 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EventFormRepository extends CrudRepository<EventForm, Long> {
-    List<EventForm> findByEventId(Long eventId);
+    Optional<EventForm> findByEventId(Long eventId);
+    void deleteByEventId(Long eventId);
 }

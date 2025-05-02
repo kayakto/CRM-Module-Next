@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,11 +61,13 @@ public class ApplicationStatusJdbcRepository {
     }
 
     public ApplicationStatus save(ApplicationStatus status) {
-        if (status.getId() == null) {
-            return insert(status);
-        } else {
-            return update(status);
-        }
+        return status.getId() == null ? insert(status) : update(status);
+    }
+
+    public List<ApplicationStatus> saveAll(List<ApplicationStatus> statuses) {
+        return statuses.stream()
+                .map(this::save)
+                .toList();
     }
 
     private ApplicationStatus insert(ApplicationStatus status) {
@@ -110,10 +113,10 @@ public class ApplicationStatusJdbcRepository {
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, statusId));
     }
 
-    public List<ApplicationStatus> findByIsSystem(boolean isSystem) {
+    public List<ApplicationStatus> findGlobalStatuses() {
         try {
-            String sql = "SELECT * FROM application_statuses WHERE is_system = ? ORDER BY display_order";
-            return jdbcTemplate.query(sql, rowMapper, isSystem);
+            String sql = "SELECT * FROM application_statuses WHERE is_system = true AND event_id IS NULL ORDER BY display_order";
+            return jdbcTemplate.query(sql, rowMapper);
         } catch (DataAccessException e) {
             throw new CustomNotFoundException("Failed to retrieve application statuses");
         }

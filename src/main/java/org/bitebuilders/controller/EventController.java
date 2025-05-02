@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.bitebuilders.service.EventService;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
@@ -58,8 +59,11 @@ public class EventController {
     @PostMapping("/post")
     public ResponseEntity<EventDTO> createEvent(@RequestBody EventRequest requestedEvent) {
         Event newEvent = requestedEvent.toEvent();
+        OffsetDateTime now = OffsetDateTime.now();
+        newEvent.setCreatedAt(now);
+        newEvent.setUpdatedAt(now);
         EventDTO eventDTO = eventService.
-                createOrUpdateEvent(newEvent, requestedEvent.getTestUrl()).toEventDTO();
+                createOrUpdateEvent(newEvent).toEventDTO();
 
         if (eventDTO != null)
             return ResponseEntity.ok(eventDTO);
@@ -70,51 +74,51 @@ public class EventController {
     /**
      * Запускает мероприятие досрочно
      */
-//    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
-//    @PostMapping("/start-event")
-//    public ResponseEntity<EventDTO> startEvent(@RequestBody StartEventRequest startEventRequest) {
-//        Long eventId = startEventRequest.getEventId();
-//        Event startedEvent;
-//
-//        if (!eventService.haveManagerAdminAccess(eventId))
-//            return ResponseEntity.badRequest().build();
-//
-//        try {
-//            startedEvent = eventService.startEventById(eventId);
-//        } catch (IllegalStateException e) {
-//            System.err.println(e.getMessage());
-//            return ResponseEntity.badRequest().build();
-//        }
-//
-//        return ResponseEntity.ok(startedEvent.toEventDTO());
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/start-event")
+    public ResponseEntity<EventDTO> startEvent(@RequestBody StartEventRequest startEventRequest) {
+        Long eventId = startEventRequest.getEventId();
+        Event startedEvent;
 
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @PutMapping("/update/{eventId}")
-//    public ResponseEntity<EventDTO> updateEvent(@PathVariable Long eventId,
-//                                             @RequestBody EventRequest requestedEvent) {
-//        if (!eventService.haveAdminAccess(eventId))
-//            return ResponseEntity.badRequest().build();
-//
-//        Event eventToUpdate = requestedEvent.toEvent(eventId);
-//        EventDTO eventDTO = eventService.createOrUpdateEvent(eventToUpdate, requestedEvent.getTestUrl()).toEventDTO();
-//
-//        if (eventDTO != null)
-//            return ResponseEntity.ok(eventDTO);
-//
-//        return ResponseEntity.notFound().build();
-//    }
-//
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @PutMapping("/hide/{eventId}")
-//    public ResponseEntity<MessageResponseDTO> hideEvent(@PathVariable Long eventId) {
-//        if (!eventService.haveAdminAccess(eventId))
-//            return ResponseEntity.badRequest().build();
-//
-//        Event.Status result = eventService.hideOrFindOutEvent(eventId);
-//        return ResponseEntity.ok(
-//                new MessageResponseDTO("Event with id " + eventId + " have status " + result));
-//    }
+        if (!eventService.haveAdminAccess(eventId))
+            return ResponseEntity.badRequest().build();
+
+        try {
+            startedEvent = eventService.startEventById(eventId);
+        } catch (IllegalStateException e) {
+            System.err.println(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(startedEvent.toEventDTO());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/update/{eventId}")
+    public ResponseEntity<EventDTO> updateEvent(@PathVariable Long eventId,
+                                             @RequestBody EventRequest requestedEvent) {
+        if (!eventService.haveAdminAccess(eventId))
+            return ResponseEntity.badRequest().build();
+
+        Event eventToUpdate = requestedEvent.toEvent(eventId);
+        EventDTO eventDTO = eventService.createOrUpdateEvent(eventToUpdate).toEventDTO();
+
+        if (eventDTO != null)
+            return ResponseEntity.ok(eventDTO);
+
+        return ResponseEntity.notFound().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/hide/{eventId}")
+    public ResponseEntity<MessageResponseDTO> hideEvent(@PathVariable Long eventId) {
+        if (!eventService.haveAdminAccess(eventId))
+            return ResponseEntity.badRequest().build();
+
+        Event.Status result = eventService.hideOrFindOutEvent(eventId);
+        return ResponseEntity.ok(
+                new MessageResponseDTO("Event with id " + eventId + " have status " + result));
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{eventId}")

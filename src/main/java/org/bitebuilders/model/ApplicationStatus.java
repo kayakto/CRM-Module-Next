@@ -1,5 +1,6 @@
 package org.bitebuilders.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,7 @@ import java.time.OffsetDateTime;
 @Setter
 @Table("application_statuses")
 @NoArgsConstructor
+@AllArgsConstructor
 public class ApplicationStatus {
     @Id
     private Long id;
@@ -40,6 +42,7 @@ public class ApplicationStatus {
     }
 
     // Метод для проверки системного статуса
+    @JsonIgnore
     public boolean isSystemStatus() {
         return Boolean.TRUE.equals(isSystem);
     }

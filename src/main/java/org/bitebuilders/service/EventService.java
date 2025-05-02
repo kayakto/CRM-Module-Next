@@ -28,16 +28,13 @@ public class EventService {
 
     private final UserInfoService userInfoService;
 
-    private final EventTestService testService;
-
     private final ApplicationStatusJdbcRepository applicationStatusRepository;
 
     @Autowired
-    public EventService(EventRepository eventRepository, UserContext userContext, UserInfoService userInfoService, EventTestService testService, ApplicationStatusJdbcRepository applicationStatusRepository) {
+    public EventService(EventRepository eventRepository, UserContext userContext, UserInfoService userInfoService, ApplicationStatusJdbcRepository applicationStatusRepository) {
         this.eventRepository = eventRepository;
         this.userContext = userContext;
         this.userInfoService = userInfoService;
-        this.testService = testService;
         this.applicationStatusRepository = applicationStatusRepository;
     }
 
@@ -84,14 +81,8 @@ public class EventService {
         return Collections.emptyList();
     }
 
-    // Метод, который сохраняет Event и возвращает его
     @Transactional
     public Event createOrUpdateEvent(Event event) {
-        return createOrUpdateEvent(event, null); // Вызов метода с testUrl=null
-    }
-
-    @Transactional
-    public Event createOrUpdateEvent(Event event, String testUrl) {
         Event resultEvent;
         // Случай для обновления или создания мероприятия через контроллер
         if (event.getStatus() == null) {
@@ -101,8 +92,27 @@ public class EventService {
             resultEvent = eventRepository.save(event);
         }
 
-        if (resultEvent.isHasTest() && testUrl != null) {
-            testService.createOrUpdateEventTest(resultEvent.getId(), testUrl);
+        // После создания нового мероприятия — клонируем глобальные статусы
+        if (event.getId() == null) {
+            throw new IllegalStateException("Event ID must not be null after save");
+        }
+
+        // Проверяем, нет ли уже статусов у этого мероприятия (на случай update)
+        List<ApplicationStatus> existing = applicationStatusRepository.findByEventId(resultEvent.getId());
+        if (existing.isEmpty()) {
+            List<ApplicationStatus> globalStatuses = applicationStatusRepository.findGlobalStatuses();
+            List<ApplicationStatus> cloned = globalStatuses.stream()
+                    .map(status -> new ApplicationStatus(
+                            null,
+                            resultEvent.getId(),  // устанавливаем eventId
+                            status.getName(),
+                            true,
+                            status.getDisplayOrder(),
+                            OffsetDateTime.now()
+                    ))
+                    .toList();
+
+            applicationStatusRepository.saveAll(cloned);
         }
 
         return resultEvent;
@@ -121,18 +131,18 @@ public class EventService {
         return true;
     }
 
-//    @Transactional
-//    public Event.Status hideOrFindOutEvent(Long eventId) {
-//        Event eventToHide = getEventById(eventId);
-//
-//        if (eventToHide.getStatus() == Event.Status.HIDDEN){
-//            eventToHide.setStatus(Event.Status.PREPARATION);
-//            return updateEventStatus(eventToHide).getStatus();
-//        }
-//
-//        eventToHide.setStatus(Event.Status.HIDDEN);
-//        return eventRepository.save(eventToHide).getStatus();
-//    }
+    @Transactional
+    public Event.Status hideOrFindOutEvent(Long eventId) {
+        Event eventToHide = getEventById(eventId);
+
+        if (eventToHide.getStatus() == Event.Status.HIDDEN){
+            eventToHide.setStatus(Event.Status.PREPARATION);
+            return updateEventStatus(eventToHide).getStatus();
+        }
+
+        eventToHide.setStatus(Event.Status.HIDDEN);
+        return eventRepository.save(eventToHide).getStatus();
+    }
 
     public Event updateEventStatus(Event event) {
         Event.Status newStatus = calculateStatus(event);
@@ -215,7 +225,8 @@ public class EventService {
         List<Event.Status> canStart = Arrays.asList(
                 Event.Status.REGISTRATION_OPEN,
                 Event.Status.NO_SEATS,
-                Event.Status.REGISTRATION_CLOSED
+                Event.Status.REGISTRATION_CLOSED,
+                Event.Status.HIDDEN // костыль
         );
 
         // Проверка, может ли мероприятие быть запущено
@@ -253,10 +264,6 @@ public class EventService {
 
         if (event.getNumberSeatsStudent() <= 0) {
             throw new IllegalArgumentException("Number of seats for students must be greater than zero.");
-        }
-
-        if (event.getChatUrl() == null || !event.getChatUrl().startsWith("http") || !event.getChatUrl().contains(".")) {
-            throw new IllegalArgumentException("Invalid chat URL.");
         }
 
         return true;

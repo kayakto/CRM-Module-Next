@@ -55,12 +55,6 @@ public class Event {
     @Column("updated_at")
     private OffsetDateTime updatedAt;
 
-    @Column("has_test")
-    private boolean hasTest; // default false in db
-
-    @Column("chat_url")
-    private String chatUrl;
-
     @Transient
     private List<ApplicationStatus> customStatuses;
 
@@ -88,7 +82,7 @@ public class Event {
         this.status = Status.IN_PROGRESS;
     }
 
-    public Event(String description, String title, Long adminId, OffsetDateTime eventStartDate, OffsetDateTime eventEndDate, OffsetDateTime enrollmentStartDate, OffsetDateTime enrollmentEndDate, String chatUrl, int numberSeatsStudent, boolean hasTest) {
+    public Event(String description, String title, Long adminId, OffsetDateTime eventStartDate, OffsetDateTime eventEndDate, OffsetDateTime enrollmentStartDate, OffsetDateTime enrollmentEndDate, int numberSeatsStudent) {
         this.description = description;
         this.title = title;
         this.adminId = adminId;
@@ -96,14 +90,12 @@ public class Event {
         this.eventEndDate = eventEndDate;
         this.enrollmentStartDate = enrollmentStartDate;
         this.enrollmentEndDate = enrollmentEndDate;
-        this.chatUrl = chatUrl;
         this.numberSeatsStudent = numberSeatsStudent;
-        this.hasTest = hasTest;
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public Event(Long id, String description, String title, Long adminId, OffsetDateTime eventStartDate, OffsetDateTime eventEndDate, OffsetDateTime enrollmentStartDate, OffsetDateTime enrollmentEndDate, String chatUrl, int numberSeatsStudent, boolean hasTest) {
+    public Event(Long id, String description, String title, Long adminId, OffsetDateTime eventStartDate, OffsetDateTime eventEndDate, OffsetDateTime enrollmentStartDate, OffsetDateTime enrollmentEndDate, int numberSeatsStudent) {
         this.id = id;
         this.description= description;
         this.title = title;
@@ -112,9 +104,7 @@ public class Event {
         this.eventEndDate = eventEndDate;
         this.enrollmentStartDate = enrollmentStartDate;
         this.enrollmentEndDate = enrollmentEndDate;
-        this.chatUrl = chatUrl;
         this.numberSeatsStudent = numberSeatsStudent;
-        this.hasTest = hasTest;
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
     }
@@ -124,9 +114,8 @@ public class Event {
                 title, adminId,
                 eventStartDate.withOffsetSameInstant(ZoneOffset.ofHours(5)),
                 eventEndDate.withOffsetSameInstant(ZoneOffset.ofHours(5)),
-                chatUrl,
                 enrollmentStartDate.withOffsetSameInstant(ZoneOffset.ofHours(5)),
                 enrollmentEndDate.withOffsetSameInstant(ZoneOffset.ofHours(5)),
-                numberSeatsStudent, hasTest, createdAt, updatedAt);
+                numberSeatsStudent, createdAt, updatedAt);
     }
 }

@@ -31,7 +31,8 @@
       "description": "Тут вообще ничего не работает, это заготовка для нового backend"
     },
     {
-      "name": "Global statuses"
+      "name": "Global statuses",
+      "description": "Этот контроллер для логики отображения статусов, которые нельзя удалить. Контроллер только для фронта, в коде он не используется. В скором времени удалю."
     },
     {
       "name": "Event statuses"
@@ -462,7 +463,6 @@
         "tags": [
           "event-controller"
         ],
-        "summary": "пока не работает",
         "operationId": "createEvent",
         "description": "Создание нового мероприятия. Доступно только администраторам.\n",
         "requestBody": {
@@ -503,7 +503,6 @@
         "tags": [
           "event-controller"
         ],
-        "summary": "пока не работает",
         "operationId": "startEvent",
         "description": "Досрочно начать мероприятие. Доступ - администратор и руководитель проекта.",
         "requestBody": {
@@ -652,7 +651,6 @@
         "tags": [
           "event-controller"
         ],
-        "summary": "пока не работает",
         "operationId": "updateEvent",
         "description": "Обновление информации о мероприятии. Доступно администраторам связанным с мероприятием.\n",
         "parameters": [
@@ -705,7 +703,6 @@
     },
     "/events/hide/{eventId}": {
       "put": {
-        "summary": "пока не работает",
         "tags": [
           "event-controller"
         ],
@@ -1331,7 +1328,7 @@
         }
       }
     },
-    "/api/statuses": {
+    "/statuses": {
       "get": {
         "tags": [
           "Global statuses"
@@ -1397,7 +1394,7 @@
         }
       }
     },
-    "/api/statuses/{id}": {
+    "/statuses/{id}": {
       "put": {
         "tags": [
           "Global statuses"
@@ -1469,7 +1466,7 @@
         }
       }
     },
-    "/api/events/{eventId}/statuses": {
+    "/events/{eventId}/statuses": {
       "get": {
         "tags": [
           "Event statuses"
@@ -1541,7 +1538,7 @@
         }
       }
     },
-    "/api/events/{eventId}/statuses/{statusId}": {
+    "/events/{eventId}/statuses/{statusId}": {
       "put": {
         "tags": [
           "Event statuses"
@@ -1630,13 +1627,13 @@
         }
       }
     },
-    "/api/forms/standard-fields": {
+    "/forms/standard-fields": {
       "get": {
         "tags": [
           "event-forms"
         ],
-        "summary": "Получить все стандартные поля",
-        "description": "Возвращает список всех доступных стандартных полей для использования в формах",
+        "summary": "Получить все стандартные поля для выбора",
+        "description": "Возвращает список всех доступных стандартных полей для форм",
         "responses": {
           "200": {
             "description": "Успешный запрос",
@@ -1645,8 +1642,45 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/FormFieldResponse"
+                    "$ref": "#/components/schemas/StandardField"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка сервера"
+          }
+        }
+      }
+    },
+    "/forms/system-fields": {
+      "get": {
+        "tags": [
+          "event-forms"
+        ],
+        "summary": "Получить все системные поля",
+        "description": "Возвращает список всех системных полей (имя, email и др.)",
+        "responses": {
+          "200": {
+            "description": "Успешный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SystemField"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1654,43 +1688,42 @@
         }
       }
     },
-    "/api/forms": {
+    "/forms": {
       "post": {
         "tags": [
           "event-forms"
         ],
-        "summary": "Создать новую анкету",
-        "description": "Создает анкету с выбранными стандартными полями",
+        "summary": "Создать новую форму или обновить уже существующую",
+        "description": "Создает новую форму с указанными кастомными и системными полями. Также обновляет существующую форму, если на мероприятии она уже существовала.\n\nКастомные поля можно сделать необязательными. В запросе в кастомных полях указывается id поля, обязательно ли оно для заполнения студентом и порядок вывода в форме(относительно кастомных полей). В системных полях указываются все id системных полей с порядком их отображения (относительно системных полей).\n",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateFormRequest"
+                "$ref": "#/components/schemas/CreateOrUpdateFormRequest"
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Анкета успешно создана",
+          "200": {
+            "description": "Форма успешно создана",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FormResponse"
+                  "$ref": "#/components/schemas/FormDTO"
                 }
               }
             }
           },
           "400": {
-            "description": "Неверный запрос",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Неверные параметры запроса"
+          },
+          "404": {
+            "description": "Указанные поля не найдены"
+          },
+          "500": {
+            "description": "Ошибка сервера"
           }
         }
       },
@@ -1698,100 +1731,51 @@
         "tags": [
           "event-forms"
         ],
-        "summary": "Получить все анкеты",
-        "description": "Возвращает список всех анкет.\nПо умолчанию возвращаются только основные данные без полей.\nДля получения полей установите параметр `withFields=true`.\n",
-        "parameters": [
-          {
-            "name": "withFields",
-            "in": "query",
-            "description": "Включить поля формы в ответ",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
+        "summary": "Получить список форм",
+        "description": "Возвращает список всех форм. Можно фильтровать по eventId и включать поля формы.\n",
         "responses": {
           "200": {
             "description": "Успешный запрос",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/FormShortResponse"
-                      }
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/FormResponse"
-                      }
-                    }
-                  ]
-                },
-                "examples": {
-                  "basic": {
-                    "value": [
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
                       {
-                        "id": 1,
-                        "eventId": 1,
-                        "title": "Основная форма",
-                        "isTemplate": false,
-                        "createdAt": "2025-04-28T16:07:55.121684+05:00",
-                        "updatedAt": "2025-04-28T16:07:55.121684+05:00"
-                      }
-                    ]
-                  },
-                  "withFields": {
-                    "value": [
+                        "$ref": "#/components/schemas/FormShortDTO"
+                      },
                       {
-                        "id": 1,
-                        "eventId": 1,
-                        "title": "Основная форма",
-                        "isTemplate": false,
-                        "createdAt": "2025-04-28T16:07:55.121684+05:00",
-                        "updatedAt": "2025-04-28T16:07:55.121684+05:00",
-                        "fields": [
-                          {
-                            "id": 1,
-                            "formId": 1,
-                            "name": "Учебное заведение",
-                            "type": "text",
-                            "isRequired": true,
-                            "displayOrder": 1,
-                            "options": []
-                          }
-                        ]
+                        "$ref": "#/components/schemas/FormDTO"
                       }
                     ]
                   }
                 }
               }
             }
+          },
+          "500": {
+            "description": "Ошибка сервера"
           }
         }
       }
     },
-    "/api/forms/{id}": {
+    "/forms/{eventId}": {
       "get": {
         "tags": [
           "event-forms"
         ],
-        "summary": "Получить анкету с полями",
-        "description": "Возвращает полную информацию об анкете включая все поля",
+        "summary": "Получить форму с полями",
+        "description": "Возвращает полную информацию о форме со всеми полями",
         "parameters": [
           {
-            "name": "id",
+            "name": "eventId",
             "in": "path",
             "required": true,
+            "description": "ID мероприятия",
             "schema": {
               "type": "integer"
-            },
-            "example": 1
+            }
           }
         ],
         "responses": {
@@ -1800,66 +1784,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FormResponse"
+                  "$ref": "#/components/schemas/FormDTO"
                 }
               }
             }
           },
           "404": {
-            "description": "Анкета не найдена",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "event-forms"
-        ],
-        "summary": "Обновить анкету",
-        "description": "Обновляет название и выбранные стандартные поля анкеты",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "example": 1
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateFormRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Анкета успешно обновлена",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FormResponse"
-                }
-              }
-            }
+            "description": "Форма не найдена"
           },
-          "400": {
-            "description": "Неверный запрос"
-          },
-          "404": {
-            "description": "Анкета или указанные поля не найдены"
+          "500": {
+            "description": "Ошибка сервера"
           }
         }
       },
@@ -1867,8 +1801,121 @@
         "tags": [
           "event-forms"
         ],
-        "summary": "Удалить анкету",
-        "description": "Удаляет анкету и все связанные поля",
+        "summary": "Удалить форму на мероприятие",
+        "description": "Удаляет форму и все связанные с ней данные",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "ID мероприятия",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Форма успешно удалена"
+          },
+          "404": {
+            "description": "Форма не найдена"
+          },
+          "500": {
+            "description": "Ошибка сервера"
+          }
+        }
+      }
+    },
+    "/applications": {
+      "post": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Отправить новую заявку",
+        "description": "Создает новую заявку студента на мероприятие.\nВсе системные поля формы должны быть заполнены, если они обязательные.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApplicationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Заявка успешно создана",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Возможные ошибки:\n- Не заполнены обязательные поля\n- Неверный формат данных\n- Заявка на это мероприятие уже существует\n"
+          },
+          "404": {
+            "description": "Форма или мероприятие не найдены"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Получить список заявок",
+        "description": "Возвращает список заявок с возможностью фильтрации по мероприятию.\nТолько для администраторов.\n",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "query",
+            "description": "ID мероприятия для фильтрации",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "statusId",
+            "in": "query",
+            "description": "ID статуса для фильтрации",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещен"
+          }
+        }
+      }
+    },
+    "/applications/{id}": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Получить заявку по ID",
+        "description": "Возвращает полную информацию о заявке",
         "parameters": [
           {
             "name": "id",
@@ -1876,16 +1923,128 @@
             "required": true,
             "schema": {
               "type": "integer"
-            },
-            "example": 1
+            }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Анкета успешно удалена"
+          "200": {
+            "description": "Успешный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Анкета не найдена"
+            "description": "Заявка не найдена"
+          }
+        }
+      }
+    },
+    "/applications/{id}/status": {
+      "put": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Обновить статус заявки",
+        "description": "Изменяет статус заявки. Доступно только для пользователей с ролью ADMIN.\nДля обновления необходимо передать ID нового статуса в теле запроса.\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID заявки",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 123
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "ID нового статуса заявки",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "statusId": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID статуса для установки",
+                    "example": 7
+                  }
+                },
+                "required": [
+                  "statusId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Статус заявки успешно обновлен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверный запрос. Возможные причины:\n- Не указан ID статуса\n- Указан несуществующий статус\n"
+          },
+          "401": {
+            "description": "Требуется аутентификация"
+          },
+          "403": {
+            "description": "Недостаточно прав (требуется роль ADMIN)"
+          },
+          "404": {
+            "description": "Ресурс не найден. Возможные причины:\n- Заявка с указанным ID не существует\n- Статус с указанным ID не существует\n"
+          }
+        }
+      }
+    },
+    "/applications/by-event/{eventId}": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Получить все заявки на мероприятие",
+        "description": "Возвращает список всех заявок для указанного мероприятия",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "ID мероприятия",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятие не найдено"
           }
         }
       }
@@ -1969,6 +2128,384 @@
       }
     },
     "schemas": {
+      "CreateOrUpdateFormRequest": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2
+          },
+          "title": {
+            "type": "string",
+            "example": "Форма для CRM"
+          },
+          "isTemplate": {
+            "type": "boolean",
+            "example": true
+          },
+          "customFields": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CreateOrUpdateFormRequest_FieldSettings"
+            },
+            "example": {
+              "1": {
+                "isRequired": true,
+                "displayOrder": 1
+              },
+              "2": {
+                "isRequired": true,
+                "displayOrder": 2
+              },
+              "3": {
+                "isRequired": true,
+                "displayOrder": 3
+              }
+            }
+          },
+          "systemFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "example": {
+              "1": 1,
+              "2": 2,
+              "3": 3,
+              "4": 4,
+              "5": 5,
+              "6": 6
+            }
+          }
+        },
+        "required": [
+          "eventId",
+          "title"
+        ]
+      },
+      "CreateOrUpdateFormRequest_FieldSettings": {
+        "type": "object",
+        "properties": {
+          "isRequired": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer"
+          }
+        }
+      },
+      "SystemField": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer"
+          }
+        }
+      },
+      "StandardField": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "FieldInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "FormDTO": {
+        "type": "object",
+        "properties": {
+          "formId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "isTemplate": {
+            "type": "boolean"
+          },
+          "systemFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldInfo"
+            }
+          },
+          "customFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldInfo"
+            }
+          }
+        }
+      },
+      "CreateApplicationRequest": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "formData"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "example": 1
+          },
+          "formData": {
+            "type": "object",
+            "description": "Данные формы, включая все системные поля.\nПример для формы с системными полями (first_name, last_name, email):\n```json\n{\n  \"first_name\": \"Иван\",\n  \"last_name\": \"Иванов\",\n  \"email\": \"ivan@example.com\",\n  \"telegram_url\": \"https://t.me/ivanov\",\n  \"additional_field\": \"Значение\"\n}\n```\n",
+            "additionalProperties": true,
+            "example": {
+              "first_name": "Иван",
+              "last_name": "Иванов",
+              "email": "ivan@example.com",
+              "telegram_url": "https://t.me/ivanov"
+            }
+          }
+        }
+      },
+      "ApplicationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "eventId": {
+            "type": "integer",
+            "example": 1
+          },
+          "statusId": {
+            "type": "integer",
+            "example": 1
+          },
+          "formData": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateApplicationStatusRequest": {
+        "type": "object",
+        "required": [
+          "statusId"
+        ],
+        "properties": {
+          "statusId": {
+            "type": "integer",
+            "example": 2
+          },
+          "reason": {
+            "type": "string",
+            "example": "Принято на первый этап"
+          }
+        }
+      },
+      "FormShortDTO": {
+        "type": "object",
+        "properties": {
+          "formId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "FieldDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Имя"
+          },
+          "type": {
+            "type": "string",
+            "example": "text"
+          },
+          "isRequired": {
+            "type": "boolean",
+            "example": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "example": 1
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Вариант 1",
+              "Вариант 2"
+            ]
+          }
+        }
+      },
+      "CreateFormRequest": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "title",
+          "systemFields"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Анкета участника"
+          },
+          "isTemplate": {
+            "type": "boolean",
+            "example": false
+          },
+          "customFieldIds": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          },
+          "systemFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Объект, где ключи - ID всех системных полей,\nа значения - флаги обязательности для этой формы.\nДолжны быть указаны ВСЕ системные поля.\n",
+            "example": {
+              "1": true,
+              "2": true,
+              "3": false,
+              "4": true,
+              "5": false,
+              "6": false
+            }
+          }
+        }
+      },
+      "UpdateFormRequest": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Обновленная анкета"
+          },
+          "isTemplate": {
+            "type": "boolean",
+            "example": false
+          },
+          "customFieldIds": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          },
+          "systemFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "1": true,
+              "2": false
+            }
+          }
+        }
+      },
       "ApplicationStatus": {
         "type": "object",
         "properties": {
@@ -2131,68 +2668,6 @@
           }
         }
       },
-      "CreateFormRequest": {
-        "type": "object",
-        "required": [
-          "eventId",
-          "title",
-          "selectedFieldIds"
-        ],
-        "properties": {
-          "eventId": {
-            "type": "integer",
-            "example": 1
-          },
-          "title": {
-            "type": "string",
-            "example": "Анкета для стажировки"
-          },
-          "isTemplate": {
-            "type": "boolean",
-            "example": false,
-            "default": false
-          },
-          "selectedFieldIds": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            },
-            "example": [
-              1,
-              2,
-              3
-            ]
-          }
-        }
-      },
-      "UpdateFormRequest": {
-        "type": "object",
-        "required": [
-          "title",
-          "selectedFieldIds"
-        ],
-        "properties": {
-          "title": {
-            "type": "string",
-            "example": "Обновленная анкета"
-          },
-          "isTemplate": {
-            "type": "boolean",
-            "example": true
-          },
-          "selectedFieldIds": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            },
-            "example": [
-              1,
-              2,
-              4
-            ]
-          }
-        }
-      },
       "ApplicationStatusRequest": {
         "type": "object",
         "properties": {
@@ -2343,7 +2818,7 @@
             "type": "string",
             "example": "CRM модуль"
           },
-          "descriptionText": {
+          "description": {
             "type": "string",
             "example": "CRM модуль для мастеров глиняной лепки"
           },
@@ -2355,39 +2830,27 @@
           "eventStartDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-02-22T22:00:00+05:00"
+            "example": "2025-06-22T22:00:00+05:00"
           },
           "eventEndDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-05-18T22:00:00+05:00"
+            "example": "2025-08-18T22:00:00+05:00"
           },
           "enrollmentStartDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-01-01T22:00:00+05:00"
+            "example": "2025-05-01T22:00:00+05:00"
           },
           "enrollmentEndDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-02-22T22:00:00+05:00"
-          },
-          "chatUrl": {
-            "type": "string",
-            "example": "https://t.me/chaturl"
+            "example": "2025-06-22T22:00:00+05:00"
           },
           "numberSeatsStudent": {
             "type": "integer",
             "format": "int32",
             "example": 50
-          },
-          "hasTest": {
-            "type": "boolean",
-            "example": false
-          },
-          "testUrl": {
-            "type": "string",
-            "example": null
           }
         }
       },
@@ -2437,7 +2900,7 @@
             ],
             "example": "REGISTRATION_OPEN"
           },
-          "descriptionText": {
+          "description": {
             "type": "string",
             "example": "CRM модуль для мастеров глиняной лепки"
           },
@@ -2453,35 +2916,27 @@
           "eventStartDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-02-22T22:00:00+05:00"
+            "example": "2025-06-22T22:00:00+05:00"
           },
           "eventEndDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-05-18T22:00:00+05:00"
+            "example": "2025-08-18T22:00:00+05:00"
           },
           "enrollmentStartDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-01-01T22:00:00+05:00"
+            "example": "2025-05-01T22:00:00+05:00"
           },
           "enrollmentEndDate": {
             "type": "string",
             "format": "date-time",
-            "example": "2025-02-22T22:00:00+05:00"
+            "example": "2025-06-22T22:00:00+05:00"
           },
           "numberSeatsStudent": {
             "type": "integer",
             "format": "int32",
             "example": 50
-          },
-          "chatUrl": {
-            "type": "string",
-            "example": "https://t.me/chaturl"
-          },
-          "hasTest": {
-            "type": "boolean",
-            "example": false
           },
           "createdAt": {
             "type": "string",

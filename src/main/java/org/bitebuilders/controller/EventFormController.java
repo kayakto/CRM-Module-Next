@@ -1,9 +1,10 @@
 package org.bitebuilders.controller;
 
-import org.bitebuilders.controller.requests.CreateFormRequest;
-import org.bitebuilders.controller.requests.UpdateFormRequest;
-import org.bitebuilders.model.EventForm;
+import lombok.RequiredArgsConstructor;
+import org.bitebuilders.controller.dto.FormDTO;
+import org.bitebuilders.controller.requests.CreateOrUpdateFormRequest;
 import org.bitebuilders.model.StandardField;
+import org.bitebuilders.model.SystemField;
 import org.bitebuilders.service.EventFormService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,61 +12,40 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/forms")
+@RequestMapping("/forms")
+@RequiredArgsConstructor
 public class EventFormController {
     private final EventFormService formService;
+
+    @GetMapping("/system-fields")
+    public List<SystemField> getAllSystemFields() {
+        return formService.getAllSystemFields();
+    }
 
     @GetMapping("/standard-fields")
     public List<StandardField> getAllStandardFields() {
         return formService.getAllStandardFields();
     }
 
-    public EventFormController(EventFormService formService) {
-        this.formService = formService;
-    }
-
     @PostMapping
-    public ResponseEntity<EventForm> createForm(
-            @RequestBody CreateFormRequest request) {
-        // Преобразуем FieldRequest в FormField
-        List<Long> fieldIds = request.selectedFieldIds();
-
-        EventForm form = formService.createForm(
-                request.eventId(),
-                request.title(),
-                request.isTemplate(),
-                fieldIds
-        );
-        return ResponseEntity.ok(form);
+    public ResponseEntity<FormDTO> createOrUpdateForm(
+            @RequestBody CreateOrUpdateFormRequest request) {
+        return ResponseEntity.ok(formService.createOrUpdateForm(request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<EventForm> updateForm(
-            @PathVariable Long id,
-            @RequestBody UpdateFormRequest request) {
-
-        return ResponseEntity.ok(formService.updateForm(
-                id,
-                request.title(),
-                request.selectedFieldIds(),
-                request.isTemplate()
-        ));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteForm(@PathVariable Long id) {
-        formService.deleteForm(id);
+    @DeleteMapping("/{eventId}")
+    public ResponseEntity<Void> deleteForm(@PathVariable Long eventId) {
+        formService.deleteForm(eventId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<EventForm>> getAllForms(
-            @RequestParam(required = false, defaultValue = "false") boolean withFields) {
-        return ResponseEntity.ok(formService.getAllForms(withFields));
+    public ResponseEntity<List<FormDTO>> getAllForms() {
+        return ResponseEntity.ok(formService.getAllForms());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<EventForm> getForm(@PathVariable Long id) {
-        return ResponseEntity.ok(formService.getFormWithFields(id));
+    @GetMapping("/{eventId}")
+    public ResponseEntity<FormDTO> getFormByEvent(@PathVariable Long eventId) {
+        return ResponseEntity.ok(formService.getFormByEventId(eventId));
     }
 }

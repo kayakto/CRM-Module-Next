@@ -1,6 +1,7 @@
 package org.bitebuilders.model;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -8,6 +9,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.OffsetDateTime;
 
 @Getter
+@Setter
 @Table("applications")
 public class Application {
     @Id
@@ -15,21 +17,6 @@ public class Application {
 
     @Column("event_id")
     private Long eventId;
-
-    @Column("first_name")
-    private String firstName;
-
-    @Column("last_name")
-    private String lastName;
-
-    @Column("surname")
-    private String surname;
-
-    @Column("email")
-    private String email;
-
-    @Column("telegram_url")
-    private String telegramUrl;
 
     @Column("status_id")
     private Long statusId;

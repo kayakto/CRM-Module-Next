@@ -25,6 +25,7 @@ tags:
   - name: event-student-controller
     description: Тут вообще ничего не работает, это заготовка для нового backend
   - name: Global statuses
+    description: Этот контроллер для логики отображения статусов, которые нельзя удалить. Контроллер только для фронта, в коде он не используется. В скором времени удалю.
   - name: Event statuses
 paths:
   /auth/login:
@@ -305,7 +306,6 @@ paths:
     post:
       tags:
         - event-controller
-      summary: пока не работает
       operationId: createEvent
       description: |
         Создание нового мероприятия. Доступно только администраторам.
@@ -332,7 +332,6 @@ paths:
     post:
       tags:
         - event-controller
-      summary: пока не работает
       operationId: startEvent
       description: Досрочно начать мероприятие. Доступ - администратор и руководитель проекта.
       requestBody:
@@ -427,7 +426,6 @@ paths:
     put:
       tags:
         - event-controller
-      summary: пока не работает
       operationId: updateEvent
       description: |
         Обновление информации о мероприятии. Доступно администраторам связанным с мероприятием.
@@ -462,7 +460,6 @@ paths:
           $ref: '#/components/responses/InternalServerErrorResponse'
   /events/hide/{eventId}:
     put:
-      summary: пока не работает
       tags:
         - event-controller
       operationId: hideEvent
@@ -877,7 +874,7 @@ paths:
           $ref: '#/components/responses/InternalServerErrorResponse'
 
 
-  /api/statuses:
+  /statuses:
     get:
       tags: [Global statuses]
       summary: Получить все глобальные статусы
@@ -925,7 +922,7 @@ paths:
   # =============================================
   # Операции с конкретным глобальным статусом
   # =============================================
-  /api/statuses/{id}:
+  /statuses/{id}:
     put:
       tags: [Global statuses]
       summary: Обновить глобальный статус
@@ -975,7 +972,7 @@ paths:
   # =============================================
   # Статусы конкретного мероприятия
   # =============================================
-  /api/events/{eventId}/statuses:
+  /events/{eventId}/statuses:
     get:
       tags: [Event statuses]
       summary: Получить статусы мероприятия
@@ -1025,7 +1022,7 @@ paths:
   # =============================================
   # Операции с конкретным статусом мероприятия
   # =============================================
-  /api/events/{eventId}/statuses/{statusId}:
+  /events/{eventId}/statuses/{statusId}:
     put:
       tags: [Event statuses]
       summary: Обновить статус мероприятия
@@ -1084,11 +1081,11 @@ paths:
         '409':
           description: Нельзя удалить - есть связанные заявки
 
-  /api/forms/standard-fields:
+  /forms/standard-fields:
     get:
       tags: [ event-forms ]
-      summary: Получить все стандартные поля
-      description: Возвращает список всех доступных стандартных полей для использования в формах
+      summary: Получить все стандартные поля для выбора
+      description: Возвращает список всех доступных стандартных полей для форм
       responses:
         '200':
           description: Успешный запрос
@@ -1097,158 +1094,276 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/FormFieldResponse'
+                  $ref: '#/components/schemas/StandardField'
+        '500':
+          description: Ошибка сервера
 
-  /api/forms:
+  /forms/system-fields:
+    get:
+      tags: [ event-forms ]
+      summary: Получить все системные поля
+      description: Возвращает список всех системных полей (имя, email и др.)
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SystemField'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /forms:
     post:
       tags: [ event-forms ]
-      summary: Создать новую анкету
-      description: Создает анкету с выбранными стандартными полями
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateFormRequest'
-      responses:
-        '201':
-          description: Анкета успешно создана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FormResponse'
-        '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    get:
-      tags: [event-forms]
-      summary: Получить все анкеты
+      summary: Создать новую форму или обновить уже существующую
       description: |
-        Возвращает список всех анкет.
-        По умолчанию возвращаются только основные данные без полей.
-        Для получения полей установите параметр `withFields=true`.
-      parameters:
-        - name: withFields
-          in: query
-          description: Включить поля формы в ответ
-          required: false
-          schema:
-            type: boolean
-            default: false
-      responses:
-        '200':
-          description: Успешный запрос
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - type: array
-                    items:
-                      $ref: '#/components/schemas/FormShortResponse'
-                  - type: array
-                    items:
-                      $ref: '#/components/schemas/FormResponse'
-              examples:
-                basic:
-                  value:
-                    - id: 1
-                      eventId: 1
-                      title: "Основная форма"
-                      isTemplate: false
-                      createdAt: "2025-04-28T16:07:55.121684+05:00"
-                      updatedAt: "2025-04-28T16:07:55.121684+05:00"
-                withFields:
-                  value:
-                    - id: 1
-                      eventId: 1
-                      title: "Основная форма"
-                      isTemplate: false
-                      createdAt: "2025-04-28T16:07:55.121684+05:00"
-                      updatedAt: "2025-04-28T16:07:55.121684+05:00"
-                      fields:
-                        - id: 1
-                          formId: 1
-                          name: "Учебное заведение"
-                          type: "text"
-                          isRequired: true
-                          displayOrder: 1
-                          options: []
-
-  /api/forms/{id}:
-    get:
-      tags: [ event-forms ]
-      summary: Получить анкету с полями
-      description: Возвращает полную информацию об анкете включая все поля
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-          example: 1
-      responses:
-        '200':
-          description: Успешный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FormResponse'
-        '404':
-          description: Анкета не найдена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    put:
-      tags: [ event-forms ]
-      summary: Обновить анкету
-      description: Обновляет название и выбранные стандартные поля анкеты
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-          example: 1
+        Создает новую форму с указанными кастомными и системными полями. Также обновляет существующую форму, если на мероприятии она уже существовала.
+        
+        Кастомные поля можно сделать необязательными. В запросе в кастомных полях указывается id поля, обязательно ли оно для заполнения студентом и порядок вывода в форме(относительно кастомных полей). В системных полях указываются все id системных полей с порядком их отображения (относительно системных полей).
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateFormRequest'
+              $ref: '#/components/schemas/CreateOrUpdateFormRequest'
       responses:
         '200':
-          description: Анкета успешно обновлена
+          description: Форма успешно создана
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FormResponse'
+                $ref: '#/components/schemas/FormDTO'
         '400':
-          description: Неверный запрос
+          description: Неверные параметры запроса
         '404':
-          description: Анкета или указанные поля не найдены
+          description: Указанные поля не найдены
+        '500':
+          description: Ошибка сервера
+
+    get:
+      tags: [ event-forms ]
+      summary: Получить список форм
+      description: |
+        Возвращает список всех форм. Можно фильтровать по eventId и включать поля формы.
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/FormShortDTO'
+                    - $ref: '#/components/schemas/FormDTO'
+        '500':
+          description: Ошибка сервера
+
+  /forms/{eventId}:
+    get:
+      tags: [ event-forms ]
+      summary: Получить форму с полями
+      description: Возвращает полную информацию о форме со всеми полями
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: ID мероприятия
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormDTO'
+        '404':
+          description: Форма не найдена
+        '500':
+          description: Ошибка сервера
 
     delete:
       tags: [ event-forms ]
-      summary: Удалить анкету
-      description: Удаляет анкету и все связанные поля
+      summary: Удалить форму на мероприятие
+      description: Удаляет форму и все связанные с ней данные
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: ID мероприятия
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Форма успешно удалена
+        '404':
+          description: Форма не найдена
+        '500':
+          description: Ошибка сервера
+
+  /applications:
+    post:
+      tags: [ applications ]
+      summary: Отправить новую заявку
+      description: |
+        Создает новую заявку студента на мероприятие.
+        Все системные поля формы должны быть заполнены, если они обязательные.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicationRequest'
+      responses:
+        '201':
+          description: Заявка успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: |
+            Возможные ошибки:
+            - Не заполнены обязательные поля
+            - Неверный формат данных
+            - Заявка на это мероприятие уже существует
+        '404':
+          description: Форма или мероприятие не найдены
+
+    get:
+      tags: [ applications ]
+      summary: Получить список заявок
+      description: |
+        Возвращает список заявок с возможностью фильтрации по мероприятию.
+        Только для администраторов.
+      parameters:
+        - name: eventId
+          in: query
+          description: ID мероприятия для фильтрации
+          required: false
+          schema:
+            type: integer
+        - name: statusId
+          in: query
+          description: ID статуса для фильтрации
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApplicationResponse'
+        '403':
+          description: Доступ запрещен
+
+  /applications/{id}:
+    get:
+      tags: [ applications ]
+      summary: Получить заявку по ID
+      description: Возвращает полную информацию о заявке
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
-          example: 1
       responses:
-        '204':
-          description: Анкета успешно удалена
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
         '404':
-          description: Анкета не найдена
+          description: Заявка не найдена
+  /applications/{id}/status:
+    put:
+      tags: [applications]
+      summary: Обновить статус заявки
+      description: |
+        Изменяет статус заявки. Доступно только для пользователей с ролью ADMIN.
+        Для обновления необходимо передать ID нового статуса в теле запроса.
+      parameters:
+        - name: id
+          in: path
+          description: ID заявки
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 123
+      requestBody:
+        required: true
+        description: ID нового статуса заявки
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusId:
+                  type: integer
+                  format: int64
+                  description: ID статуса для установки
+                  example: 7
+              required:
+                - statusId
+      responses:
+        '200':
+          description: Статус заявки успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: |
+            Неверный запрос. Возможные причины:
+            - Не указан ID статуса
+            - Указан несуществующий статус
+        '401':
+          description: Требуется аутентификация
+        '403':
+          description: Недостаточно прав (требуется роль ADMIN)
+        '404':
+          description: |
+            Ресурс не найден. Возможные причины:
+            - Заявка с указанным ID не существует
+            - Статус с указанным ID не существует
+  /applications/by-event/{eventId}:
+    get:
+      tags: [ applications ]
+      summary: Получить все заявки на мероприятие
+      description: Возвращает список всех заявок для указанного мероприятия
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: ID мероприятия
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApplicationResponse'
+        '404':
+          description: Мероприятие не найдено
 
 components:
   responses:
@@ -1299,6 +1414,285 @@ components:
                 type: string
                 example: Internal Server Error
   schemas:
+    CreateOrUpdateFormRequest:
+      type: object
+      properties:
+        eventId:
+          type: integer
+          format: int64
+          example: 2
+        title:
+          type: string
+          example: "Форма для CRM"
+        isTemplate:
+          type: boolean
+          example: true
+        customFields:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CreateOrUpdateFormRequest_FieldSettings'
+          example:
+            1:
+              isRequired: true
+              displayOrder: 1
+            2:
+              isRequired: true
+              displayOrder: 2
+            3:
+              isRequired: true
+              displayOrder: 3
+        systemFields:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            1: 1
+            2: 2
+            3: 3
+            4: 4
+            5: 5
+            6: 6
+      required:
+        - eventId
+        - title
+
+    CreateOrUpdateFormRequest_FieldSettings:
+      type: object
+      properties:
+        isRequired:
+          type: boolean
+        displayOrder:
+          type: integer
+
+    SystemField:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+        isRequired:
+          type: boolean
+        displayOrder:
+          type: integer
+
+    StandardField:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+        isRequired:
+          type: boolean
+        displayOrder:
+          type: integer
+        options:
+          type: array
+          items:
+            type: string
+
+    FieldInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        type:
+          type: string
+        isRequired:
+          type: boolean
+        displayOrder:
+          type: integer
+        options:
+          type: array
+          items:
+            type: string
+
+    FormDTO:
+      type: object
+      properties:
+        formId:
+          type: integer
+          format: int64
+        eventId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        isTemplate:
+          type: boolean
+        systemFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldInfo'
+        customFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldInfo'
+    CreateApplicationRequest:
+      type: object
+      required:
+        - eventId
+        - formData
+      properties:
+        eventId:
+          type: integer
+          example: 1
+        formData:
+          type: object
+          description: |
+            Данные формы, включая все системные поля.
+            Пример для формы с системными полями (first_name, last_name, email):
+            ```json
+            {
+              "first_name": "Иван",
+              "last_name": "Иванов",
+              "email": "ivan@example.com",
+              "telegram_url": "https://t.me/ivanov",
+              "additional_field": "Значение"
+            }
+            ```
+          additionalProperties: true
+          example:
+            first_name: "Иван"
+            last_name: "Иванов"
+            email: "ivan@example.com"
+            telegram_url: "https://t.me/ivanov"
+
+    ApplicationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        eventId:
+          type: integer
+          example: 1
+        statusId:
+          type: integer
+          example: 1
+        formData:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateApplicationStatusRequest:
+      type: object
+      required:
+        - statusId
+      properties:
+        statusId:
+          type: integer
+          example: 2
+        reason:
+          type: string
+          example: "Принято на первый этап"
+
+    FormShortDTO:
+      type: object
+      properties:
+        formId:
+          type: integer
+          format: int64
+        eventId:
+          type: integer
+          format: int64
+        title:
+          type: string
+
+    FieldDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Имя
+        type:
+          type: string
+          example: text
+        isRequired:
+          type: boolean
+          example: true
+        displayOrder:
+          type: integer
+          example: 1
+        options:
+          type: array
+          items:
+            type: string
+          example: [ "Вариант 1", "Вариант 2" ]
+
+    CreateFormRequest:
+      type: object
+      required:
+        - eventId
+        - title
+        - systemFields
+      properties:
+        eventId:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Анкета участника
+        isTemplate:
+          type: boolean
+          example: false
+        customFieldIds:
+          type: array
+          items:
+            type: integer
+          example: [ 1, 2, 3 ]
+        systemFields:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: |
+            Объект, где ключи - ID всех системных полей,
+            а значения - флаги обязательности для этой формы.
+            Должны быть указаны ВСЕ системные поля.
+          example:
+            {"1": true, "2": true, "3": false, "4": true,"5": false, "6": false}
+
+    UpdateFormRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: Обновленная анкета
+        isTemplate:
+          type: boolean
+          example: false
+        customFieldIds:
+          type: array
+          items:
+            type: integer
+          example: [ 1, 2, 3 ]
+        systemFields:
+          type: object
+          additionalProperties:
+            type: boolean
+          example: { "1": true, "2": false }
+
+
     # Модель статуса
     ApplicationStatus:
       type: object
@@ -1422,42 +1816,6 @@ components:
           nullable: true
           example: [ "Очная", "Заочная" ]
 
-    CreateFormRequest:
-      type: object
-      required: [ eventId, title, selectedFieldIds ]
-      properties:
-        eventId:
-          type: integer
-          example: 1
-        title:
-          type: string
-          example: "Анкета для стажировки"
-        isTemplate:
-          type: boolean
-          example: false
-          default: false
-        selectedFieldIds:
-          type: array
-          items:
-            type: integer
-          example: [ 1, 2, 3 ]
-
-    UpdateFormRequest:
-      type: object
-      required: [ title, selectedFieldIds ]
-      properties:
-        title:
-          type: string
-          example: "Обновленная анкета"
-        isTemplate:
-          type: boolean
-          example: true
-        selectedFieldIds:
-          type: array
-          items:
-            type: integer
-          example: [ 1, 2, 4 ]
-
 
     ApplicationStatusRequest:
       type: object
@@ -1571,7 +1929,7 @@ components:
         title:
           type: string
           example: CRM модуль
-        descriptionText:
+        description:
           type: string
           example: CRM модуль для мастеров глиняной лепки
         adminId:
@@ -1581,32 +1939,23 @@ components:
         eventStartDate:
           type: string
           format: date-time
-          example: '2025-02-22T22:00:00+05:00'
+          example: '2025-06-22T22:00:00+05:00'
         eventEndDate:
           type: string
           format: date-time
-          example: '2025-05-18T22:00:00+05:00'
+          example: '2025-08-18T22:00:00+05:00'
         enrollmentStartDate:
           type: string
           format: date-time
-          example: '2025-01-01T22:00:00+05:00'
+          example: '2025-05-01T22:00:00+05:00'
         enrollmentEndDate:
           type: string
           format: date-time
-          example: '2025-02-22T22:00:00+05:00'
-        chatUrl:
-          type: string
-          example: https://t.me/chaturl
+          example: '2025-06-22T22:00:00+05:00'
         numberSeatsStudent:
           type: integer
           format: int32
           example: 50
-        hasTest:
-          type: boolean
-          example: false
-        testUrl:
-          type: string
-          example: null
 
     StudentTestResultRequest:
       type: object
@@ -1646,7 +1995,7 @@ components:
             - HIDDEN
             - DELETED
           example: REGISTRATION_OPEN
-        descriptionText:
+        description:
           type: string
           example: CRM модуль для мастеров глиняной лепки
         title:
@@ -1659,29 +2008,23 @@ components:
         eventStartDate:
           type: string
           format: date-time
-          example: '2025-02-22T22:00:00+05:00'
+          example: '2025-06-22T22:00:00+05:00'
         eventEndDate:
           type: string
           format: date-time
-          example: '2025-05-18T22:00:00+05:00'
+          example: '2025-08-18T22:00:00+05:00'
         enrollmentStartDate:
           type: string
           format: date-time
-          example: '2025-01-01T22:00:00+05:00'
+          example: '2025-05-01T22:00:00+05:00'
         enrollmentEndDate:
           type: string
           format: date-time
-          example: '2025-02-22T22:00:00+05:00'
+          example: '2025-06-22T22:00:00+05:00'
         numberSeatsStudent:
           type: integer
           format: int32
           example: 50
-        chatUrl:
-          type: string
-          example: https://t.me/chaturl
-        hasTest:
-          type: boolean
-          example: false
         createdAt:
           type: string
           format: date-time
