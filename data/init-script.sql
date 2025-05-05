@@ -122,6 +122,8 @@ CREATE TABLE status_robots (
     PRIMARY KEY (status_id, robot_id)
 );
 
+ALTER TABLE status_robots ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+
 CREATE TABLE events_tests (
     id SERIAL PRIMARY KEY,
     event_id BIGINT NOT NULL,

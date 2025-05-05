@@ -2048,6 +2048,196 @@
           }
         }
       }
+    },
+    "/robots/event/{eventId}": {
+      "get": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Получить список статусов и их роботов по ID события",
+        "description": "Возвращает список статусов, связанных с указанным событием, и каждого из их роботов.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID события"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ со списком статусов и роботов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatusWithRobotsDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Событие не найдено"
+          }
+        }
+      }
+    },
+    "/robots/{statusId}": {
+      "get": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Получить список роботов по статусу",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID статуса заявки"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список роботов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RobotDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Добавить нового робота к статусу",
+        "description": "Есть два типа роботов: SEND_MESSAGE_WITH_LINK и SEND_MESSAGE. В первом обязательно указать поле link. В роботе с типом SEND_MESSAGE поля link не должно быть.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID статуса заявки"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRobotRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Робот создан",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RobotDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/robots/{statusId}/{robotId}": {
+      "put": {
+        "description": "Есть два типа роботов: SEND_MESSAGE_WITH_LINK и SEND_MESSAGE. В первом обязательно указать поле link. В роботе с типом SEND_MESSAGE поля link не должно быть.\n",
+        "tags": [
+          "robots"
+        ],
+        "summary": "Обновить данные робота",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "robotId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRobotRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Робот обновлён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RobotDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Удалить робота из статуса",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "robotId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Робот удалён"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2128,6 +2318,95 @@
       }
     },
     "schemas": {
+      "StatusWithRobotsDTO": {
+        "type": "object",
+        "properties": {
+          "statusId": {
+            "type": "integer",
+            "example": 42
+          },
+          "robots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RobotDTO"
+            }
+          }
+        }
+      },
+      "RobotDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "statusId": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SEND_MESSAGE",
+              "SEND_MESSAGE_WITH_LINK"
+            ]
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "position": {
+            "type": "integer"
+          }
+        }
+      },
+      "CreateRobotRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "message"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SEND_MESSAGE",
+              "SEND_MESSAGE_WITH_LINK"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateRobotRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "message"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreateOrUpdateFormRequest": {
         "type": "object",
         "properties": {
