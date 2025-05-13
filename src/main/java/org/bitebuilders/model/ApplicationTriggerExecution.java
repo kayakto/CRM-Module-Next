@@ -7,20 +7,26 @@ import lombok.Setter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.util.Map;
+import java.time.OffsetDateTime;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("status_triggers")
-public class StatusTrigger {
+@Table("application_trigger_executions")
+public class ApplicationTriggerExecution {
+    @Column("application_id")
+    private Long applicationId;
+
     @Column("status_id")
     private Long statusId;
 
     @Column("trigger_id")
     private Long triggerId;
 
-    @Column("parameters")
-    private Map<String, Object> parameters;
+    @Column("executed")
+    private Boolean executed;
+
+    @Column("executed_at")
+    private OffsetDateTime executedAt;
 }

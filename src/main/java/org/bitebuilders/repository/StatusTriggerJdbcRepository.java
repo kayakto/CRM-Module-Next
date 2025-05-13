@@ -19,14 +19,13 @@ public class StatusTriggerJdbcRepository {
 
     public void save(StatusTrigger statusTrigger) {
         String sql = """
-            INSERT INTO status_triggers (status_id, trigger_id, executed, parameters)
-            VALUES (?, ?, ?, ?::jsonb)
+            INSERT INTO status_triggers (status_id, trigger_id, parameters)
+            VALUES (?, ?, ?::jsonb)
         """;
         jdbcTemplate.update(
                 sql,
                 statusTrigger.getStatusId(),
                 statusTrigger.getTriggerId(),
-                statusTrigger.getExecuted(),
                 convertToJson(statusTrigger.getParameters())
         );
     }
@@ -34,12 +33,11 @@ public class StatusTriggerJdbcRepository {
     public void update(StatusTrigger statusTrigger) {
         String sql = """
             UPDATE status_triggers
-            SET executed = ?, parameters = ?::jsonb
+            SET parameters = ?::jsonb
             WHERE status_id = ? AND trigger_id = ?
         """;
         jdbcTemplate.update(
                 sql,
-                statusTrigger.getExecuted(),
                 convertToJson(statusTrigger.getParameters()),
                 statusTrigger.getStatusId(),
                 statusTrigger.getTriggerId()
@@ -51,23 +49,12 @@ public class StatusTriggerJdbcRepository {
         jdbcTemplate.update(sql, statusId, triggerId);
     }
 
-    public Boolean isExecuted(Long statusId, Long triggerId) {
-        String sql = "SELECT executed FROM status_triggers WHERE status_id = ? AND trigger_id = ?";
-        return jdbcTemplate.queryForObject(sql, Boolean.class, statusId, triggerId);
-    }
-
-    public void setExecuted(Long statusId, Long triggerId, boolean executed) {
-        String sql = "UPDATE status_triggers SET executed = ? WHERE status_id = ? AND trigger_id = ?";
-        jdbcTemplate.update(sql, executed, statusId, triggerId);
-    }
-
     public List<StatusTrigger> findByStatusId(Long statusId) {
         String sql = "SELECT * FROM status_triggers WHERE status_id = ?";
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             StatusTrigger st = new StatusTrigger();
             st.setStatusId(rs.getLong("status_id"));
             st.setTriggerId(rs.getLong("trigger_id"));
-            st.setExecuted(rs.getBoolean("executed"));
             st.setParameters(readJson(rs.getString("parameters")));
             return st;
         }, statusId);

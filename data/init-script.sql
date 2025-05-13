@@ -101,7 +101,6 @@ CREATE TABLE triggers (
 CREATE TABLE status_triggers (
     status_id INT NOT NULL REFERENCES application_statuses(id) ON DELETE CASCADE,
     trigger_id INT NOT NULL REFERENCES triggers(id) ON DELETE CASCADE,
-    executed BOOLEAN DEFAULT FALSE,
     parameters JSONB NOT NULL DEFAULT '{}'::jsonb,
     PRIMARY KEY (status_id, trigger_id)
 );
@@ -184,13 +183,10 @@ VALUES
     ('Одобрена', TRUE, 3),
     ('Отклонена', TRUE, 4);
 
--- Добавляем триггеры
-INSERT INTO triggers (name, type, parameters)
+INSERT INTO triggers (id, name, type, parameters)
 VALUES
-    ('Отправить приветственное письмо', 'email',
-     '{"template": "welcome", "subject": "Добро пожаловать!"}'),
-    ('Уведомить администратора', 'notification',
-     '{"channel": "telegram", "message": "Новая заявка"}');
+  (1, 'Отследить переход по ссылке из сообщения', 'LINK_CLICK', '{"link": ""}'),
+  (2, 'Отследить результаты тестирования', 'TEST_RESULT', '{"condition": "", "value": 0}');
 
 -- Связываем триггеры со статусами
 INSERT INTO status_triggers (status_id, trigger_id)
@@ -250,8 +246,8 @@ CREATE TABLE system_fields (
 
 -- Добавляем системные поля
 INSERT INTO system_fields (name, type, is_required, display_order) VALUES
-('first_name', 'text', true, 1),
-('last_name', 'text', true, 2),
+('last_name', 'text', true, 1),
+('first_name', 'text', true, 2),
 ('surname', 'text', false, 3),
 ('email', 'email', true, 4),
 ('telegram_url', 'url', true, 5),
@@ -266,9 +262,11 @@ CREATE TABLE form_system_fields (
     PRIMARY KEY (form_id, system_field_id)
 );
 
-INSERT INTO triggers (name, type, parameters)
-VALUES (
-    'Зайти в чат',
-    'ENTER_CHAT',
-    '{"link": "https://chat.example.com"}'
+CREATE TABLE application_trigger_executions (
+    application_id INT NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+    status_id INT NOT NULL REFERENCES application_statuses(id) ON DELETE CASCADE,
+    trigger_id INT NOT NULL REFERENCES triggers(id) ON DELETE CASCADE,
+    executed BOOLEAN NOT NULL DEFAULT FALSE,
+    executed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (application_id, status_id, trigger_id)
 );

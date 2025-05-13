@@ -3,6 +3,7 @@ package org.bitebuilders.controller;
 import org.bitebuilders.controller.requests.CreateTriggerRequest;
 import org.bitebuilders.controller.requests.LinkTriggerToStatusRequest;
 import org.bitebuilders.model.Trigger;
+import org.bitebuilders.service.ApplicationTriggerExecutionService;
 import org.bitebuilders.service.StatusTriggerService;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StatusTriggerController {
 
-    private final StatusTriggerService service;
+    private final StatusTriggerService statusTriggerService;
+
+    private final ApplicationTriggerExecutionService applicationTriggerExecutionService;
 
     @GetMapping("/{statusId}")
     public ResponseEntity<List<Trigger>> getTriggers(@PathVariable Long statusId) {
-        return ResponseEntity.ok(service.getTriggersByStatusId(statusId));
+        return ResponseEntity.ok(statusTriggerService.getTriggersByStatusId(statusId));
     }
 
     @PostMapping("/{statusId}")
@@ -30,8 +33,18 @@ public class StatusTriggerController {
             @PathVariable Long statusId,
             @RequestBody @Valid LinkTriggerToStatusRequest request
     ) {
-        service.linkTriggerToStatus(statusId, request.getTriggerId(), request.getParameters());
+        statusTriggerService.linkTriggerToStatus(statusId, request.getTriggerId(), request.getParameters());
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @GetMapping("/{applicationId}/{statusId}/{triggerId}/executed")
+    public ResponseEntity<Boolean> isTriggerExecuted(
+            @PathVariable Long applicationId,
+            @PathVariable Long statusId,
+            @PathVariable Long triggerId
+    ) {
+        boolean executed = applicationTriggerExecutionService.isTriggerExecuted(applicationId, statusId, triggerId);
+        return ResponseEntity.ok(executed);
     }
 
     @DeleteMapping("/{statusId}/{triggerId}")
@@ -39,16 +52,17 @@ public class StatusTriggerController {
             @PathVariable Long statusId,
             @PathVariable Long triggerId
     ) {
-        service.unlinkTriggerFromStatus(statusId, triggerId);
+        statusTriggerService.unlinkTriggerFromStatus(statusId, triggerId);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{statusId}/{triggerId}/executed")
+    @PatchMapping("/{applicationId}/{statusId}/{triggerId}/executed")
     public ResponseEntity<Void> setExecuted(
+            @PathVariable Long applicationId,
             @PathVariable Long statusId,
             @PathVariable Long triggerId
     ) {
-        service.markTriggerAsExecuted(statusId, triggerId);
+        applicationTriggerExecutionService.markExecuted(applicationId, statusId, triggerId);
         return ResponseEntity.noContent().build();
     }
 
@@ -58,7 +72,7 @@ public class StatusTriggerController {
             @PathVariable Long triggerId,
             @RequestBody Map<String, Object> parameters
     ) {
-        service.updateStatusTriggerParameters(statusId, triggerId, parameters);
+        statusTriggerService.updateStatusTriggerParameters(statusId, triggerId, parameters);
         return ResponseEntity.noContent().build();
     }
 }

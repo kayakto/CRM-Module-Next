@@ -2,7 +2,6 @@ package org.bitebuilders.controller.requests;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.Getter;
 
 import java.util.Map;
 

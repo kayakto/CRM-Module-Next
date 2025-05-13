@@ -31,11 +31,12 @@ public class StatusTriggerService {
             throw new IllegalStateException("Триггер уже привязан к этому статусу");
         }
 
+        validateParameters(trigger.getType(), parameters);
+
         // Создаем и сохраняем связь
         StatusTrigger statusTrigger = new StatusTrigger();
         statusTrigger.setStatusId(statusId);
         statusTrigger.setTriggerId(triggerId);
-        statusTrigger.setExecuted(false);
         statusTrigger.setParameters(parameters);
 
         statusTriggerRepository.save(statusTrigger);
@@ -70,22 +71,34 @@ public class StatusTriggerService {
     }
 
     /**
-     * Изменение executed на true (например, пользователь зашел в чат)
-     */
-    public void markTriggerAsExecuted(Long statusId, Long triggerId) {
-        statusTriggerRepository.setExecuted(statusId, triggerId, true);
-    }
-
-    /**
      * Обновление параметров триггера у статуса
      */
     public void updateStatusTriggerParameters(Long statusId, Long triggerId, Map<String, Object> newParams) {
         StatusTrigger updated = new StatusTrigger();
         updated.setStatusId(statusId);
         updated.setTriggerId(triggerId);
-        updated.setExecuted(statusTriggerRepository.isExecuted(statusId, triggerId));
         updated.setParameters(newParams);
         statusTriggerRepository.update(updated);
+    }
+
+    private void validateParameters(String type, Map<String, Object> params) {
+        switch (type) {
+            case "LINK_CLICK" -> {
+                if (!params.containsKey("link") || params.get("link").toString().isBlank()) {
+                    throw new IllegalArgumentException("Поле 'link' обязательно");
+                }
+            }
+            case "TEST_RESULT" -> {
+                if (!params.containsKey("condition") || !params.containsKey("value")) {
+                    throw new IllegalArgumentException("Поля 'condition' и 'value' обязательны");
+                }
+                Object value = params.get("value");
+                if (!(value instanceof Number)) {
+                    throw new IllegalArgumentException("'value' должно быть числом");
+                }
+            }
+            default -> throw new IllegalArgumentException("Неизвестный тип триггера: " + type);
+        }
     }
 }
 

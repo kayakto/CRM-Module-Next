@@ -2305,6 +2305,99 @@
         }
       }
     },
+    "/status-triggers/{applicationId}/{statusId}/{triggerId}/executed": {
+      "get": {
+        "tags": [
+          "status-trigger"
+        ],
+        "summary": "Проверка выполнения триггера для заявки",
+        "description": "Возвращает true, если указанный триггер уже был выполнен для заявки в заданном статусе, иначе false.",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "description": "ID заявки",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "statusId",
+            "in": "path",
+            "required": true,
+            "description": "ID статуса",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "triggerId",
+            "in": "path",
+            "required": true,
+            "description": "ID триггера",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Флаг выполнения триггера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Заявка, статус или триггер не найдены"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "status-trigger"
+        ],
+        "summary": "Установить признак выполнения триггера",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "applicationId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "triggerId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Признак выполнения успешно установлен"
+          }
+        }
+      }
+    },
     "/status-triggers/{statusId}/{triggerId}": {
       "delete": {
         "tags": [
@@ -2332,37 +2425,6 @@
         "responses": {
           "204": {
             "description": "Триггер успешно удалён из статуса"
-          }
-        }
-      }
-    },
-    "/status-triggers/{statusId}/{triggerId}/executed": {
-      "patch": {
-        "tags": [
-          "status-trigger"
-        ],
-        "summary": "Установить признак выполнения триггера",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "statusId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "triggerId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Признак выполнения успешно установлен"
           }
         }
       }
@@ -2915,8 +2977,10 @@
             "example": {
               "first_name": "Иван",
               "last_name": "Иванов",
+              "surname": "Иванович",
               "email": "ivan@example.com",
-              "telegram_url": "https://t.me/ivanov"
+              "telegram_url": "https://t.me/ivanov",
+              "vk_url": "https://vk.com/ivanov"
             }
           }
         }

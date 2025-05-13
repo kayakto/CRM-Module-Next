@@ -2,6 +2,7 @@ package org.bitebuilders.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bitebuilders.component.UserContext;
+import org.bitebuilders.controller.requests.CreateOrUpdateFormRequest;
 import org.bitebuilders.enums.StatusRequest;
 import org.bitebuilders.enums.UserRole;
 import org.bitebuilders.exception.EventNotFoundException;
@@ -30,12 +31,15 @@ public class EventService {
 
     private final ApplicationStatusJdbcRepository applicationStatusRepository;
 
+    private final EventFormService eventFormService;
+
     @Autowired
-    public EventService(EventRepository eventRepository, UserContext userContext, UserInfoService userInfoService, ApplicationStatusJdbcRepository applicationStatusRepository) {
+    public EventService(EventRepository eventRepository, UserContext userContext, UserInfoService userInfoService, ApplicationStatusJdbcRepository applicationStatusRepository, EventFormService eventFormService) {
         this.eventRepository = eventRepository;
         this.userContext = userContext;
         this.userInfoService = userInfoService;
         this.applicationStatusRepository = applicationStatusRepository;
+        this.eventFormService = eventFormService;
     }
 
     public void isPresentEvent(Long eventId) {
@@ -83,39 +87,65 @@ public class EventService {
 
     @Transactional
     public Event createOrUpdateEvent(Event event) {
-        Event resultEvent;
-        // Случай для обновления или создания мероприятия через контроллер
+        Event savedEvent = saveEventWithStatus(event);
+        createSystemFormForEvent(savedEvent);
+        cloneGlobalStatusesIfNeeded(savedEvent);
+        return savedEvent;
+    }
+
+    private Event saveEventWithStatus(Event event) {
         if (event.getStatus() == null) {
             validateEvent(event);
-            resultEvent = updateEventStatus(event);
+            return updateEventStatus(event);
         } else {
-            resultEvent = eventRepository.save(event);
+            return eventRepository.save(event);
         }
+    }
 
-        // После создания нового мероприятия — клонируем глобальные статусы
+    private void createSystemFormForEvent(Event event) {
         if (event.getId() == null) {
             throw new IllegalStateException("Event ID must not be null after save");
         }
 
-        // Проверяем, нет ли уже статусов у этого мероприятия (на случай update)
-        List<ApplicationStatus> existing = applicationStatusRepository.findByEventId(resultEvent.getId());
-        if (existing.isEmpty()) {
-            List<ApplicationStatus> globalStatuses = applicationStatusRepository.findGlobalStatuses();
-            List<ApplicationStatus> cloned = globalStatuses.stream()
-                    .map(status -> new ApplicationStatus(
-                            null,
-                            resultEvent.getId(),  // устанавливаем eventId
-                            status.getName(),
-                            true,
-                            status.getDisplayOrder(),
-                            OffsetDateTime.now()
-                    ))
-                    .toList();
+        Map<Long, Integer> systemFields = Map.of(
+                1L, 1,
+                2L, 2,
+                3L, 3,
+                4L, 4,
+                5L, 5,
+                6L, 6
+        );
 
-            applicationStatusRepository.saveAll(cloned);
+        CreateOrUpdateFormRequest request = new CreateOrUpdateFormRequest(
+                event.getId(),
+                event.getTitle(), // можно задать значение по умолчанию, если title может быть пустым
+                false,
+                null,
+                systemFields
+        );
+
+        eventFormService.createOrUpdateForm(request);
+    }
+
+    private void cloneGlobalStatusesIfNeeded(Event event) {
+        List<ApplicationStatus> existing = applicationStatusRepository.findByEventId(event.getId());
+        if (!existing.isEmpty()) {
+            return;
         }
 
-        return resultEvent;
+        List<ApplicationStatus> globalStatuses = applicationStatusRepository.findGlobalStatuses();
+        List<ApplicationStatus> cloned = globalStatuses.stream()
+                .map(status -> new ApplicationStatus(
+                        null,
+                        event.getId(),
+                        status.getName(),
+                        true,
+                        status.getDisplayOrder(),
+                        OffsetDateTime.now()
+                ))
+                .toList();
+
+        applicationStatusRepository.saveAll(cloned);
     }
 
     public void deleteAllEvents() {
@@ -125,6 +155,10 @@ public class EventService {
     // Ручное управление статусом (для администратора) - администратор вручную изменяет статус мероприятия (“Скрыто”, “Удалено“)
     @Transactional
     public boolean deleteEvent(Long eventId) {
+        // 1. Удаляем форму
+        eventFormService.deleteForm(eventId);
+
+        // 2. Меняем статус мероприятия
         Event eventToDelete = getEventById(eventId);
         eventToDelete.setStatus(Event.Status.DELETED);
         eventRepository.save(eventToDelete);
