@@ -2238,6 +2238,262 @@
           }
         }
       }
+    },
+    "/status-triggers/{statusId}": {
+      "get": {
+        "tags": [
+          "status-trigger"
+        ],
+        "summary": "Получить список триггеров, привязанных к статусу",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID статуса"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ со списком триггеров",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Trigger"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "status-trigger"
+        ],
+        "summary": "Привязать триггер к статусу",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID статуса"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkTriggerToStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Триггер успешно привязан к статусу"
+          }
+        }
+      }
+    },
+    "/status-triggers/{statusId}/{triggerId}": {
+      "delete": {
+        "tags": [
+          "status-trigger"
+        ],
+        "summary": "Удалить триггер из статуса",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "triggerId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Триггер успешно удалён из статуса"
+          }
+        }
+      }
+    },
+    "/status-triggers/{statusId}/{triggerId}/executed": {
+      "patch": {
+        "tags": [
+          "status-trigger"
+        ],
+        "summary": "Установить признак выполнения триггера",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "triggerId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Признак выполнения успешно установлен"
+          }
+        }
+      }
+    },
+    "/status-triggers/{statusId}/{triggerId}/parameters": {
+      "patch": {
+        "tags": [
+          "status-trigger"
+        ],
+        "summary": "Обновить параметры привязанного триггера",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "triggerId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Параметры успешно обновлены"
+          }
+        }
+      }
+    },
+    "/triggers": {
+      "post": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Создать новый триггер",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTriggerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Триггер успешно создан",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trigger"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/triggers/{id}": {
+      "get": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Получить триггер по ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID триггера"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ с данными триггера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trigger"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Триггер не найден"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "trigger"
+        ],
+        "summary": "Удалить триггер по ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID триггера"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Триггер успешно удалён"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2318,6 +2574,67 @@
       }
     },
     "schemas": {
+      "CreateTriggerRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "parameters"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название триггера"
+          },
+          "type": {
+            "type": "string",
+            "description": "Тип триггера"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Параметры триггера (JSON)"
+          }
+        }
+      },
+      "Trigger": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LinkTriggerToStatusRequest": {
+        "type": "object",
+        "required": [
+          "triggerId",
+          "parameters"
+        ],
+        "properties": {
+          "triggerId": {
+            "type": "integer"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
       "StatusWithRobotsDTO": {
         "type": "object",
         "properties": {

@@ -102,6 +102,7 @@ CREATE TABLE status_triggers (
     status_id INT NOT NULL REFERENCES application_statuses(id) ON DELETE CASCADE,
     trigger_id INT NOT NULL REFERENCES triggers(id) ON DELETE CASCADE,
     executed BOOLEAN DEFAULT FALSE,
+    parameters JSONB NOT NULL DEFAULT '{}'::jsonb,
     PRIMARY KEY (status_id, trigger_id)
 );
 
@@ -263,4 +264,11 @@ CREATE TABLE form_system_fields (
     is_required BOOLEAN DEFAULT TRUE,
     display_order INT NOT NULL,
     PRIMARY KEY (form_id, system_field_id)
+);
+
+INSERT INTO triggers (name, type, parameters)
+VALUES (
+    'Зайти в чат',
+    'ENTER_CHAT',
+    '{"link": "https://chat.example.com"}'
 );
