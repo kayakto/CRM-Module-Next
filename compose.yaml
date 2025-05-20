@@ -50,6 +50,23 @@ services:
     networks:
       - main-network
 
+  telegram-bot:
+    container_name: 'telegram-bot-crm'
+    build:
+      context: ./telegram-service
+      dockerfile: Dockerfile
+    depends_on:
+      - db-postgres
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-postgres:5432/internships
+      - SPRING_DATASOURCE_USERNAME=crm_admin
+      - SPRING_DATASOURCE_PASSWORD=bitrix24
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    restart: always
+    networks:
+      - main-network
+
 
 networks:
   main-network:

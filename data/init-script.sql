@@ -270,3 +270,11 @@ CREATE TABLE application_trigger_executions (
     executed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (application_id, status_id, trigger_id)
 );
+
+CREATE TABLE telegram_users (
+    id SERIAL PRIMARY KEY,
+    telegram_id BIGINT NOT NULL UNIQUE,
+    telegram_username TEXT,
+    application_id BIGINT REFERENCES applications(id),
+    created_at TIMESTAMP DEFAULT now()
+);
