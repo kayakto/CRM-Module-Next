@@ -22,6 +22,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.postgresql:postgresql")
     implementation("org.telegram:telegrambots-spring-boot-starter:6.8.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
 
     // Lombok
     compileOnly("org.projectlombok:lombok")

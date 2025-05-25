@@ -48,4 +48,5 @@ src/main/java/PasswordGenerator.java
 src/main/java/org/bitebuilders/component/EventMapper.java
 postgres-data/
 
-.env
+*.env
+*.venv

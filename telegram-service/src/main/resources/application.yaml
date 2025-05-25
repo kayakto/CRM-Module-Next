@@ -9,3 +9,8 @@ telegram:
   bot:
     username: ${TELEGRAM_BOT_USERNAME}
     token: ${TELEGRAM_BOT_TOKEN}
+logging:
+  level:
+    org:
+      bitebuilders:
+        telegram=DEBUG:

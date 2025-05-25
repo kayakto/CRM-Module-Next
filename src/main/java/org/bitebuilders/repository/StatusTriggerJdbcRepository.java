@@ -70,11 +70,11 @@ public class StatusTriggerJdbcRepository {
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, statusId, triggerId));
     }
 
-    private String convertToJson(Object obj) {
+    private String convertToJson(Map<String, Object> parameters) {
         try {
-            return objectMapper.writeValueAsString(obj);
+            return objectMapper.writeValueAsString(parameters);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Ошибка сериализации JSON", e);
+            throw new RuntimeException("Ошибка сериализации parameters в JSON", e);
         }
     }
 

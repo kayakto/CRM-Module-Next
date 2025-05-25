@@ -272,9 +272,20 @@ CREATE TABLE application_trigger_executions (
 );
 
 CREATE TABLE telegram_users (
-    id SERIAL PRIMARY KEY,
-    telegram_id BIGINT NOT NULL UNIQUE,
-    telegram_username TEXT,
-    application_id BIGINT REFERENCES applications(id),
-    created_at TIMESTAMP DEFAULT now()
+    telegram_id VARCHAR(255) NOT NULL,
+    telegram_username VARCHAR(255),
+    application_id BIGINT NOT NULL,
+    PRIMARY KEY (telegram_id, application_id),
+    FOREIGN KEY (application_id) REFERENCES applications(id)
+);
+
+CREATE TABLE application_robot_executions (
+    application_id BIGINT,
+    status_id BIGINT,
+    robot_id BIGINT,
+    executed BOOLEAN DEFAULT FALSE,
+    executed_at TIMESTAMP,
+    callback_type VARCHAR(50),
+    callback_received_at TIMESTAMP,
+    PRIMARY KEY (application_id, status_id, robot_id)
 );

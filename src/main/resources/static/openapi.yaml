@@ -1414,7 +1414,7 @@ paths:
       tags: [ robots ]
       summary: Добавить нового робота к статусу
       description: |
-        Есть два типа роботов: SEND_MESSAGE_WITH_LINK и SEND_MESSAGE. В первом обязательно указать поле link. В роботе с типом SEND_MESSAGE поля link не должно быть.
+        Есть три типа роботов: SEND_MESSAGE_WITH_LINK, SEND_MESSAGE, SEND_TEST. В SEND_TEST и SEND_MESSAGE_WITH_LINK обязательно указать поле link. В роботе с типом SEND_MESSAGE поля link не должно быть.
       parameters:
         - in: path
           name: statusId
@@ -1509,6 +1509,8 @@ paths:
     post:
       tags: [ status-trigger ]
       summary: Привязать триггер к статусу
+      description: |
+        Есть два типа триггеров: перейти по ссылке(LINK_CLICK), и прошел тестирование (TEST_PASSED). В первом нужно указать обязательно link. В TEST_PASSED link не нужен, надо написать condition(условие) и value(значение). Condition бывает трех типов: greater_than, less_than, equals.
       parameters:
         - in: path
           name: statusId

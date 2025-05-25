@@ -1,5 +1,6 @@
 package org.bitebuilders.controller;
 
+import org.bitebuilders.controller.dto.StatusTriggerDto;
 import org.bitebuilders.controller.requests.CreateTriggerRequest;
 import org.bitebuilders.controller.requests.LinkTriggerToStatusRequest;
 import org.bitebuilders.model.Trigger;
@@ -24,17 +25,17 @@ public class StatusTriggerController {
     private final ApplicationTriggerExecutionService applicationTriggerExecutionService;
 
     @GetMapping("/{statusId}")
-    public ResponseEntity<List<Trigger>> getTriggers(@PathVariable Long statusId) {
+    public ResponseEntity<List<StatusTriggerDto>> getTriggers(@PathVariable Long statusId) {
         return ResponseEntity.ok(statusTriggerService.getTriggersByStatusId(statusId));
     }
 
     @PostMapping("/{statusId}")
-    public ResponseEntity<Void> addTriggerToStatus(
+    public ResponseEntity<StatusTriggerDto> addTriggerToStatus(
             @PathVariable Long statusId,
             @RequestBody @Valid LinkTriggerToStatusRequest request
     ) {
-        statusTriggerService.linkTriggerToStatus(statusId, request.getTriggerId(), request.getParameters());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        StatusTriggerDto dto = statusTriggerService.linkTriggerToStatus(statusId, request.getTriggerId(), request.getParameters());
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
     @GetMapping("/{applicationId}/{statusId}/{triggerId}/executed")
@@ -67,13 +68,13 @@ public class StatusTriggerController {
     }
 
     @PatchMapping("/{statusId}/{triggerId}/parameters")
-    public ResponseEntity<Void> updateParameters(
+    public ResponseEntity<StatusTriggerDto> updateParameters(
             @PathVariable Long statusId,
             @PathVariable Long triggerId,
             @RequestBody Map<String, Object> parameters
     ) {
-        statusTriggerService.updateStatusTriggerParameters(statusId, triggerId, parameters);
-        return ResponseEntity.noContent().build();
+        StatusTriggerDto dto = statusTriggerService.updateStatusTriggerParameters(statusId, triggerId, parameters);
+        return ResponseEntity.ok(dto);
     }
 }
 
