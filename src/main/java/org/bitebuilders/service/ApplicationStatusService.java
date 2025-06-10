@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -122,4 +122,38 @@ public class ApplicationStatusService {
         }
         return statusRepository.findByEventId(eventId);
     }
+
+    @Transactional
+    public void updateDisplayOrders(Long eventId, Map<Long, Integer> orders) {
+        // Получаем все статусы мероприятия
+        List<ApplicationStatus> statuses = statusRepository.findByEventId(eventId);
+
+        // Проверка: все ли переданные id существуют
+        Set<Long> existingIds = statuses.stream()
+                .map(ApplicationStatus::getId)
+                .collect(Collectors.toSet());
+
+        for (Long id : orders.keySet()) {
+            if (!existingIds.contains(id)) {
+                throw new CustomNotFoundException("Статус с id " + id + " не найден для события " + eventId);
+            }
+        }
+
+        // Проверка на уникальность displayOrder
+        List<Integer> newOrders = new ArrayList<>(orders.values());
+        Set<Integer> uniqueOrders = new HashSet<>(newOrders);
+        if (newOrders.size() != uniqueOrders.size()) {
+            throw new IllegalArgumentException("Порядок отображения должен быть уникален для каждого статуса");
+        }
+
+        // Обновляем значения
+        for (ApplicationStatus status : statuses) {
+            if (orders.containsKey(status.getId())) {
+                status.setDisplayOrder(orders.get(status.getId()));
+                status.setUpdatedAt(OffsetDateTime.now());
+                statusRepository.save(status);
+            }
+        }
+    }
+
 }

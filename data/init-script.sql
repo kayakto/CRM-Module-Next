@@ -59,8 +59,7 @@ CREATE TABLE application_statuses (
     is_system BOOLEAN DEFAULT FALSE,
     display_order INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uniq_status_order UNIQUE (event_id, display_order)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Создаем таблицу заявок в соответствии с Java-классом

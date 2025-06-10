@@ -2,6 +2,7 @@ package org.bitebuilders.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.bitebuilders.controller.dto.DisplayOrderUpdateRequest;
 import org.bitebuilders.controller.requests.StatusRequest;
 import org.bitebuilders.controller.requests.StatusUpdateRequest;
 import org.bitebuilders.exception.CustomNotFoundException;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/events/{eventId}/statuses")
@@ -63,6 +65,21 @@ public class EventStatusController {
                     statusUpdate
             );
             return ResponseEntity.ok(updatedStatus);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (CustomNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/reorder")
+    public ResponseEntity<?> reorderStatuses(
+            @PathVariable Long eventId,
+            @RequestBody DisplayOrderUpdateRequest orders
+    ) {
+        try {
+            statusService.updateDisplayOrders(eventId, orders.getParsedOrders());
+            return ResponseEntity.ok("Display order обновлён для статусов");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (CustomNotFoundException e) {

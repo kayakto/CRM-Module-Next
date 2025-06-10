@@ -1022,6 +1022,43 @@ paths:
   # =============================================
   # Операции с конкретным статусом мероприятия
   # =============================================
+  /events/{eventId}/statuses/reorder:
+    put:
+      tags: [ Event statuses ]
+      summary: Обновить порядок отображения статусов мероприятия
+      description: Массово обновляет поле displayOrder у статусов конкретного мероприятия. Передаётся словарь, где ключ — ID статуса, а значение — новое значение displayOrder.
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+          description: ID мероприятия
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orders:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  example:
+                    "5": 1
+                    "6": 2
+                    "7": 3
+                  description: Словарь соответствия ID статусов и их новых displayOrder
+      responses:
+        '200':
+          description: Порядок отображения успешно обновлен
+        '400':
+          description: Ошибка валидации или конфликт значений displayOrder
+        '404':
+          description: Один или несколько статусов не найдены для указанного мероприятия
+
   /events/{eventId}/statuses/{statusId}:
     put:
       tags: [Event statuses]
@@ -1735,6 +1772,17 @@ components:
                 type: string
                 example: Internal Server Error
   schemas:
+    DisplayOrderUpdateRequest:
+      type: object
+      properties:
+        orders:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            "5": 1
+            "6": 2
+            "7": 3
     CreateTriggerRequest:
       type: object
       required:
